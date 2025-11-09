@@ -330,6 +330,57 @@
             opacity: 0.9;
         }
 
+        .colab-thumbnail {
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(135deg, #f9ab00 0%, #ea4335 50%, #4285f4 100%);
+            border: 2px solid #0f0;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .colab-thumbnail:hover {
+            border-color: #0f0;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+            transform: scale(1.02);
+        }
+
+        .colab-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: white;
+            text-align: left;
+        }
+
+        .colab-icon {
+            font-size: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .colab-text h3 {
+            margin: 0 0 5px 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .colab-text p {
+            margin: 0;
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
         @media (max-width: 768px) {
             .profile-container {
                 grid-template-columns: 1fr;
@@ -412,7 +463,10 @@
                             <div class="play-icon">▶</div>
                         </div>
                     </div>
-                    <div style="margin-top: 10px; font-size: 12px; color: #0f0;">
+                    <div style="margin-top: 10px; font-size: 14px; color: #0f0; font-weight: bold;">
+                        L2_Hate Dingo Freestyle
+                    </div>
+                    <div style="margin-top: 5px; font-size: 12px; color: #0f0;">
                         Click to watch our featured video
                     </div>
                 </div>
@@ -431,13 +485,25 @@
                 </div>
 
                 <div class="section">
-                    <h2>JISU KIM's Blurbs</h2>
+                    <h2>SNUNLP KR-SBERT 기반 K-Haters 문장 검색 코드</h2>
                     <div style="margin-bottom: 20px;">
                         <h3 style="color: #0f0; margin-bottom: 10px;">About me:</h3>
                         <div class="blurb-content">
                             Hi! Visit my profile if you liked the layout
                             <div style="margin-top: 5px;">
                                 <a href="#" class="edit-link">[edit]</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="color: #0f0; margin-bottom: 10px;">Google Colab Notebook <a href="https://colab.research.google.com/drive/1K6u8eBaCyyAHaMO1M8lXmPyGA7jTkNJY?authuser=1#scrollTo=omd9s2-N_B1A" target="_blank" class="edit-link">[Open Notebook]</a></h3>
+                        <div class="colab-thumbnail" onclick="openColab()">
+                            <div class="colab-content">
+                                <div class="colab-icon">📊</div>
+                                <div class="colab-text">
+                                    <h3>Research Notebook</h3>
+                                    <p>View my data analysis and research work</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -477,6 +543,10 @@
         
         function openGemini() {
             window.open('https://gemini.google.com/share/7579a7d6d15c', '_blank');
+        }
+        
+        function openColab() {
+            window.open('https://colab.research.google.com/drive/1K6u8eBaCyyAHaMO1M8lXmPyGA7jTkNJY?authuser=1#scrollTo=omd9s2-N_B1A', '_blank');
         }
     </script>
 </body>
