@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>K-HATERS Network (Pure HTML + Three.js)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Three.js & PapaParse (CDN) -->
+  <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
+  <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    :root {
+      --glass-bg: rgba(0,0,0,0.30);
+      --glass-border: rgba(255,255,255,0.10);
+      --glass-bg-2: rgba(255,255,255,0.05);
+      --glass-bg-2-hover: rgba(255,255,255,0.10);
+      --text-dim: rgba(255,255,255,0.70);
+      --text-dimmer: rgba(255,255,255,0.50);
+      --white-80: rgba(255,255,255,0.80);
+    }
+    html, body {
+      margin:0; padding:0; height:100%; background: #000;
+      font-family: "Helvetica Neue", Arial, system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      color:#fff; overflow:hidden;
+    }
+    .app {
+      position:relative; width:100vw; height:100vh; background:black;
+    }
+    #three-container {
+      position:absolute; inset:0;
+    }
+    .loading {
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      font-size:24px; letter-spacing:0.3em; color:#fff; opacity:0.9; pointer-events:none;
+      animation: pulse 1.4s infinite ease-in-out;
+    }
+    @keyframes pulse {
+      0% { opacity:0.3; }
+      50% { opacity:0.9; }
+      100% { opacity:0.3; }
+    }
+    .topbar {
+      position:absolute; left:2rem; right:2rem; top:2rem;
+      display:flex; align-items:flex-start; justify-content:space-between; gap:1.5rem;
+    }
+    .card {
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 1.25rem;
+    }
+    .title {
+      font-weight: 300; letter-spacing: .15em; margin:0 0 .8rem 0; font-size: 28px; color:#fff;
+    }
+    .muted { color: var(--text-dim); font-weight:300; font-size:14px; margin:.25rem 0; }
+    .muted .red { color:#ff6b6b; }
+    .toplist { display:flex; flex-direction:column; gap:.6rem; max-width: 320px; }
+    .row {
+      display:flex; align-items:center; justify-content:space-between; gap:.75rem;
+      font-size:13px; font-weight:300;
+    }
+    .dot {
+      width:8px; height:8px; border-radius:50%;
+      box-shadow: 0 0 10px currentColor;
+    }
+    .controls {
+      position:absolute; left:2rem; right:2rem; bottom:2rem;
+      display:flex; align-items:flex-end; justify-content:space-between;
+    }
+    .btn {
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: var(--glass-bg-2);
+      border: 1px solid rgba(255,255,255,0.2);
+      color:#fff; font-size:13px; font-weight:300; letter-spacing:.15em;
+      padding: .8rem 1.5rem; border-radius: 999px; cursor:pointer;
+      transition: background .2s ease, transform .1s ease;
+    }
+    .btn:hover { background: var(--glass-bg-2-hover); }
+    .btn.small {
+      width:48px; height:48px; border-radius:50%; padding:0; font-size:16px;
+      display:flex; align-items:center; justify-content:center;
+      position:absolute; top:2rem; right:2rem;
+    }
+    .hide { display:none; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div id="three-container"></div>
+    <div id="loading" class="loading">LOADING DATA...</div>
+
+    <div id="ui-group" class="hide">
+      <div class="topbar">
+        <div class="card">
+          <h1 class="title">K-HATERS</h1>
+          <div class="muted">
+            <p><span id="stat-total"></span> samples / <span id="stat-nodes"></span> categories</p>
+            <p class="red"><span id="stat-hate"></span>% hate speech detected</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin:0 0 .6rem 0; font-size:16px; font-weight:300; color:var(--white-80); letter-spacing:.1em;">
+            TOP TARGETS
+          </h3>
+          <div id="top-list" class="toplist"></div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="btn-rotate" class="btn">PAUSE</button>
+        <button id="btn-hide" class="btn">HIDE UI</button>
+      </div>
+    </div>
+
+    <button id="btn-show" class="btn small hide">⋯</button>
+  </div>
+
+  <script>
+    // ---------------------------
+    // CSV (샘플 데이터) — 필요 시 교체
+    // ---------------------------
+    const csvData = `text,label,target_label,offensiveness_rationale,target_rationale
+확진자 늘어난다 = 검사수가 늘었다.,offensive,[],[],[]
+중국늠 모가지 짤라서 보내라,L2_hate,['region'],"[array([2, 3]) array([4, 7]) array([ 8, 10])]","[array([0, 3])]"
+장사잘되는곳은 임금이 올라도 잘된다라~~음ㅋ곧 니들은 코앞에 가던 편의점을3키로 넘는 편의점가서 사게될것이다2021.07.12. 23:46,offensive,['others'],[],[]
+동물하나로도 추잡스러운 짓을 하는 나라답다. 판다도 아웃이다.,offensive,['individual'],"[array([ 7, 11])]","[array([19, 21])]"
+미국도 총알 날아다녀요. 넘 안심말길..그런면에선 한국만큼 안전한 나라도 없네.,L1_hate,['region'],"[array([ 4, 11])]","[array([0, 2])]"
+대한민국 탈레반 더듬당,L2_hate,['political' 'others'],"[array([ 9, 12])]","[array([5, 8]) array([ 9, 12])]"
+정신병자들은 감옥에 넣어야하는데.. 대놓고 간첩이 활동하고있으니 미친 문정부,L2_hate,['political' 'others'],"[array([0, 4]) array([36, 38])]","[array([0, 4]) array([24, 26]) array([39, 42])]"
+쪼잔하다 왜놈들아 후진국이냐?,L2_hate,['region'],"[array([0, 3]) array([5, 7])]","[array([5, 7])]"
+전세계가 다싫어하지 저것도기사라고 ?,L1_hate,['job'],"[array([11, 13])]",[]
+못사는 나라는 다이유가있음 동남아 인들이 무시받는게 다이유가있음 그냥 태생 인종이 이중인격 내로남불 인성부터 쓰레기,L2_hate,['region' 'disabled'],"[array([61, 64])]","[array([15, 20])]"
+세금탈루래..웃끼고 있는것들..더듬어 만진당 눔들 자식들 마누라들 하나도 옳바른것들 있냐?,L1_hate,['political'],"[array([13, 14]) array([25, 26])]","[array([17, 24])]"
+젊은 놈이 과거에도 안하던 더러운 정치를 하네. 이게 젊은 정치인의 참신한 정치?,L2_hate,['age'],"[array([3, 4]) array([15, 18])]","[array([0, 4]) array([30, 36])]"
+개돼지들의 낙원 대구경북 ?? 들이 놀라겠네?ㅋ,L2_hate,['region'],"[array([0, 3])]","[array([ 9, 13])]"
+무죄 나올것 같음… ㅋㅋ 지금 #@이름# 대통령 만들라고 난리인데. 옜날에 #@이름#때 처럼… 역사는 반복된다… 재판부 판새들도 검새랑 친구들이라…,L2_hate,['job' 'individual'],"[array([32, 34]) array([67, 69]) array([72, 74])]","[array([17, 22]) array([42, 47]) array([67, 69]) array([72, 74])]"
+이런 OOO조옷바리 새키들이 조옷바리리같은 소리 하고 앉어있네,L2_hate,['region'],"[array([ 6, 10]) array([11, 13]) array([16, 21])]","[array([ 6, 10]) array([16, 21])]"
+절라도 도대체 요며칠간 파죽의 몇연승째야ㅋㅋ이정도면 범죄지역으로 국가적으로 지정해라 방문 자제하라고~~,L2_hate,['region'],"[array([0, 3]) array([29, 33]) array([42, 44])]","[array([0, 3])]"
+왜 우리나라는 이렇게 안하고 다 받아주면서 확진자 늘고 *단계 유지하면서 경제와 의료진들을 죽이고 있나요? 대체 왜? 홍콩은 21일이나 격리를 하는데 우리는 그냥 패스? 어이없네요 아주,L1_hate,['region'],"[array([95, 98])]","[array([2, 6])]"
+북한의 하수인 대통령 이 나라의 앞날이 걱정이다귀한나라의 재산을 파괴당하고도 찍소리 말도 못하고도 무슨 대북정책을 한다고 제 정신이냐? #@이름# 밑에가서 일해라,L1_hate,['political'],"[array([4, 7])]","[array([ 8, 11])]"
+그냥 ㅈ크보 해체해라 경기 끝나고 허구헌날 룸싸롱가고 유흥하고 이게 스포츠 선수냐,L2_hate,['job'],"[array([3, 6]) array([7, 9]) array([19, 22]) array([24, 27])
+ array([30, 32])]","[array([38, 44])]"
+니뽕과 이제 끝내자.,L2_hate,['region'],"[array([0, 2])]","[array([0, 2])]"
+또 홍어족 아니면 조선족,L2_hate,['region'],"[array([2, 5]) array([10, 13])]","[array([2, 5]) array([10, 13])]"
+사과를 했는지 구걸을 했는지 누가 봤어 이놈의 정부는 암것도 못믿어,L1_hate,['political'],"[array([ 8, 10]) array([23, 24])]","[array([26, 28])]"
+왜 하필12명인가. 더듬당과 동일하게 같게 했나,L2_hate,['political'],"[array([11, 14])]","[array([11, 14])]"
+일본 저것들과 ioc는 지구상에서 사라지시길~~,L1_hate,['region'],[],"[array([0, 2]) array([ 8, 11])]"
+민노총발 코로나지???? #@이름#아? 그치? .. 촛불의 주최자 민노총! 대주주의 심기 건드리지 못할거다. 노동자팔이 집단! 평화팔이! 민족팔이! 피해자팔이! .. 트랜드야..,offensive,['individual' 'others'],[],"[array([0, 3]) array([14, 19]) array([37, 40])]"
+친중좌파 탈레반과 친중좌파 #@이름#은 중국몽을 함꼐하는 동지다,L1_hate,['region' 'political' 'individual'],"[array([0, 4]) array([10, 14])]","[array([0, 4]) array([5, 8]) array([10, 14]) array([15, 20])
+ array([22, 25])]"
+아니 지네 쪽바리 선수단도 안먹는걸 왜 손님들이 먹냐고,L2_hate,['region'],"[array([6, 9])]","[array([ 6, 13])]"
+정신차려라!! 대한민국 좌파 지지자들!!잘못하다간 대한민국이 아프칸 꼴 된다!!!,L1_hate,['political'],"[array([13, 15])]","[array([16, 19])]"
+"아직 페미들 좌표가 안찍혀서 베댓이 클린하고 정상적이네.조만간 페미들 좌표찍히면 베댓더러워지고 여자댓글비율50%이상으로 높아질듯ㅋㅋ 평소 정치,경제,사회뉴스 보지도 않아서 대부분 기사에서 여자댓글비율30%미만인데ㅋㅋ",L2_hate,['gender'],"[array([3, 5]) array([35, 37]) array([47, 51])]","[array([3, 5]) array([35, 37]) array([53, 55]) array([105, 107])]"`
+    // ---------------------------
+
+    // Known categories + colors
+    const targetColors = {
+      region: 0xff1744,
+      political: 0xff6d00,
+      gender: 0xe91e63,
+      age: 0xffd600,
+      job: 0x00e5ff,
+      individual: 0xaa00ff,
+      religion: 0x00e676,
+      disabled: 0xff9100,
+      others: 0x76ff03,
+      none: 0x546e7a
+    };
+    const allowedTargets = Object.keys(targetColors);
+
+    // Global refs
+    let scene, camera, renderer, animationId;
+    let isRotating = true;
+    let time = 0;
+
+    const appEl = document.querySelector('.app');
+    const containerEl = document.getElementById('three-container');
+    const uiGroupEl = document.getElementById('ui-group');
+    const loadingEl = document.getElementById('loading');
+    const btnRotate = document.getElementById('btn-rotate');
+    const btnHide = document.getElementById('btn-hide');
+    const btnShow = document.getElementById('btn-show');
+    const statTotalEl = document.getElementById('stat-total');
+    const statNodesEl = document.getElementById('stat-nodes');
+    const statHateEl = document.getElementById('stat-hate');
+    const topListEl = document.getElementById('top-list');
+
+    // Build Three.js
+    function initThree() {
+      scene = new THREE.Scene();
+
+      // Gradient background via canvas
+      const bgCanvas = document.createElement('canvas');
+      bgCanvas.width = 512; bgCanvas.height = 512;
+      const bctx = bgCanvas.getContext('2d');
+      const grad = bctx.createRadialGradient(256,256,0,256,256,256);
+      grad.addColorStop(0, '#0a0a1a');
+      grad.addColorStop(0.5, '#050510');
+      grad.addColorStop(1, '#000000');
+      bctx.fillStyle = grad;
+      bctx.fillRect(0,0,512,512);
+      const bgTex = new THREE.CanvasTexture(bgCanvas);
+      scene.background = bgTex;
+
+      camera = new THREE.PerspectiveCamera(
+        75, containerEl.clientWidth / containerEl.clientHeight, 0.1, 2000
+      );
+      camera.position.z = 180;
+
+      renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(containerEl.clientWidth, containerEl.clientHeight);
+      containerEl.appendChild(renderer.domElement);
+
+      scene.fog = new THREE.FogExp2(0x000000, 0.002);
+
+      // Lights
+      const ambient = new THREE.AmbientLight(0x222244, 0.4);
+      scene.add(ambient);
+      const light1 = new THREE.DirectionalLight(0x4488ff, 0.6);
+      light1.position.set(100,100,100);
+      scene.add(light1);
+      const light2 = new THREE.DirectionalLight(0xff4488, 0.4);
+      light2.position.set(-100,-100,-100);
+      scene.add(light2);
+
+      // Mouse interaction (smooth)
+      let mouseX=0, mouseY=0, targetRX=0, targetRY=0;
+      window.addEventListener('mousemove', (e)=>{
+        mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+        mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+        targetRX = mouseY * 0.15;
+        targetRY = mouseX * 0.15;
+      });
+
+      function animate() {
+        animationId = requestAnimationFrame(animate);
+        time += 0.01;
+
+        if (isRotating) {
+          scene.rotation.y += 0.0015;
+          scene.rotation.x = Math.sin(time * 0.3) * 0.05;
+        } else {
+          scene.rotation.x += (targetRX - scene.rotation.x) * 0.03;
+          scene.rotation.y += (targetRY - scene.rotation.y) * 0.03;
+        }
+        camera.position.z = 180 + Math.sin(time * 0.5) * 5;
+
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      window.addEventListener('resize', ()=>{
+        camera.aspect = containerEl.clientWidth / containerEl.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(containerEl.clientWidth, containerEl.clientHeight);
+      });
+    }
+
+    // Parsing helpers
+    function parseTargets(raw) {
+      if (!raw) return [];
+      // robust: pick tokens like region, political, gender...
+      const tokens = (raw.match(/[A-Za-z_]+/g) || []).filter(t=>allowedTargets.includes(t));
+      return tokens;
+    }
+
+    function processData(rows) {
+      // Counters
+      const targetCounts = {};
+      const coOccurrences = {};
+      const hateLevelsByTarget = {};
+      allowedTargets.forEach(cat=>{
+        targetCounts[cat]=0;
+        hateLevelsByTarget[cat]={ none:0, normal:0, offensive:0, L1_hate:0, L2_hate:0, L3_hate:0 };
+        coOccurrences[cat]={};
+        allowedTargets.forEach(cat2=>{ coOccurrences[cat][cat2]=0; });
+      });
+
+      rows.forEach(r=>{
+        const label = (r.label || 'normal').trim();
+        const targets = parseTargets(r.target_label);
+
+        targets.forEach(t=>{
+          if (targetCounts[t] !== undefined) {
+            targetCounts[t]++;
+            if (hateLevelsByTarget[t][label] !== undefined) {
+              hateLevelsByTarget[t][label]++;
+            }
+          }
+        });
+
+        for (let i=0;i<targets.length;i++){
+          for (let j=i+1;j<targets.length;j++){
+            const t1=targets[i], t2=targets[j];
+            if (coOccurrences[t1] && coOccurrences[t1][t2] !== undefined) {
+              coOccurrences[t1][t2]++; coOccurrences[t2][t1]++;
+            }
+          }
+        }
+      });
+
+      // Build nodes
+      const nodes = Object.keys(targetColors)
+        .filter(cat=> (targetCounts[cat]||0) > 0)
+        .map(cat=>{
+          const total = targetCounts[cat];
+          const hateScore =
+            (hateLevelsByTarget[cat].L3_hate||0) * 3 +
+            (hateLevelsByTarget[cat].L2_hate||0) * 2 +
+            (hateLevelsByTarget[cat].L1_hate||0) * 1;
+          return {
+            id:cat, label:cat, count:total, hateScore,
+            hateLevels: hateLevelsByTarget[cat],
+            color: targetColors[cat]
+          };
+        });
+
+      // Organic positions (spherical-ish)
+      const radius = 70;
+      nodes.forEach((node, idx)=>{
+        const phi = Math.acos(-1 + (2*idx)/nodes.length);
+        const theta = Math.sqrt(nodes.length * Math.PI) * phi;
+        const r = radius + (Math.random()-0.5)*20;
+        node.x = r * Math.cos(theta) * Math.sin(phi);
+        node.y = r * Math.sin(theta) * Math.sin(phi);
+        node.z = r * Math.cos(phi);
+      });
+
+      // Particles
+      const particlesGeometry = new THREE.BufferGeometry();
+      const particleCount = 2000;
+      const positions = new Float32Array(particleCount*3);
+      for (let i=0;i<positions.length;i++){
+        positions[i] = (Math.random()-0.5) * 400;
+      }
+      particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions,3));
+      const particlesMaterial = new THREE.PointsMaterial({
+        color:0x44ff88, size:0.5, transparent:true, opacity:0.3, blending:THREE.AdditiveBlending
+      });
+      const particleSystem = new THREE.Points(particlesGeometry, particlesMaterial);
+      scene.add(particleSystem);
+
+      // Node meshes (+ glow + labels)
+      const nodeObjects=[];
+      nodes.forEach(node=>{
+        const size = 4 + Math.log(node.count+1)*2.5;
+
+        // Glow
+        const glowGeo = new THREE.SphereGeometry(size*1.8, 32, 32);
+        const glowMat = new THREE.MeshBasicMaterial({
+          color: node.color, transparent:true, opacity:0.15, blending:THREE.AdditiveBlending
+        });
+        const glowMesh = new THREE.Mesh(glowGeo, glowMat);
+        glowMesh.position.set(node.x, node.y, node.z);
+        scene.add(glowMesh);
+
+        // Main sphere
+        const geo = new THREE.SphereGeometry(size, 32, 32);
+        const mat = new THREE.MeshPhongMaterial({
+          color: node.color, transparent:true, opacity:0.9,
+          emissive: node.color, emissiveIntensity:0.4, shininess:100
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(node.x, node.y, node.z);
+        mesh.userData=node;
+        scene.add(mesh);
+        nodeObjects.push(mesh);
+
+        // Label sprite
+        const c = document.createElement('canvas');
+        const ctx = c.getContext('2d');
+        c.width=512; c.height=128;
+        const grad = ctx.createLinearGradient(0,0,512,0);
+        const hex = '#' + node.color.toString(16).padStart(6,'0');
+        grad.addColorStop(0, hex);
+        grad.addColorStop(1, hex + '88');
+        ctx.fillStyle=grad;
+        ctx.font='bold 52px "Helvetica Neue", Arial';
+        ctx.textAlign='center';
+        ctx.fillText(String(node.label||'').toUpperCase(), 256, 70);
+        const tex = new THREE.CanvasTexture(c);
+        const sMat = new THREE.SpriteMaterial({ map:tex, transparent:true, opacity:0.85 });
+        const spr = new THREE.Sprite(sMat);
+        spr.position.set(node.x, node.y + size + 15, node.z);
+        spr.scale.set(35, 8.75, 1);
+        scene.add(spr);
+      });
+
+      // Curved connections
+      nodes.forEach((n1,i)=>{
+        nodes.forEach((n2,j)=>{
+          if (i<j){
+            const w = coOccurrences[n1.id]?.[n2.id] ?? 0;
+            if (w>0){
+              const start = new THREE.Vector3(n1.x,n1.y,n1.z);
+              const end   = new THREE.Vector3(n2.x,n2.y,n2.z);
+              const mid   = new THREE.Vector3(
+                (start.x+end.x)/2,
+                (start.y+end.y)/2 + 15,
+                (start.z+end.z)/2
+              );
+              const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
+              const pts = curve.getPoints(50);
+              const g = new THREE.BufferGeometry().setFromPoints(pts);
+              const opacity = Math.min(0.08 + (w/8)*0.3, 0.5);
+              const m = new THREE.LineBasicMaterial({
+                color:0x44ff88, transparent:true, opacity, blending:THREE.AdditiveBlending
+              });
+              const line = new THREE.Line(g, m);
+              scene.add(line);
+            }
+          }
+        });
+      });
+
+      // Stats
+      const totalHate = rows.filter(d => ['L1_hate','L2_hate','L3_hate'].includes((d.label||'').trim())).length;
+      const hatePct = rows.length ? ((totalHate / rows.length) * 100).toFixed(1) : '0.0';
+      const topTargets = [...nodes].sort((a,b)=> b.count - a.count).slice(0,5);
+
+      // UI update
+      statTotalEl.textContent = rows.length;
+      statNodesEl.textContent = nodes.length;
+      statHateEl.textContent = hatePct;
+
+      topListEl.innerHTML = '';
+      topTargets.forEach(t=>{
+        const row = document.createElement('div');
+        row.className='row';
+        const left = document.createElement('div');
+        left.style.display='flex'; left.style.alignItems='center'; left.style.gap='10px';
+        const dot = document.createElement('div');
+        dot.className='dot';
+        dot.style.color = '#' + t.color.toString(16).padStart(6,'0');
+        dot.style.backgroundColor = dot.style.color;
+        const name = document.createElement('span');
+        name.textContent = String(t.label||'').toUpperCase();
+        name.style.color = 'rgba(255,255,255,0.9)';
+        name.style.letterSpacing = '.05em';
+        name.style.fontWeight = '300';
+        left.appendChild(dot); left.appendChild(name);
+        const cnt = document.createElement('span');
+        cnt.textContent = t.count;
+        cnt.style.color = 'rgba(255,255,255,0.5)';
+        row.appendChild(left); row.appendChild(cnt);
+        topListEl.appendChild(row);
+      });
+
+      loadingEl.classList.add('hide');
+      uiGroupEl.classList.remove('hide');
+    }
+
+    // Controls
+    btnRotate.addEventListener('click', ()=>{
+      isRotating = !isRotating;
+      btnRotate.textContent = isRotating ? 'PAUSE' : 'ROTATE';
+    });
+    btnHide.addEventListener('click', ()=>{
+      uiGroupEl.classList.add('hide');
+      btnShow.classList.remove('hide');
+    });
+    btnShow.addEventListener('click', ()=>{
+      btnShow.classList.add('hide');
+      uiGroupEl.classList.remove('hide');
+    });
+
+    // Boot
+    initThree();
+
+    // Parse CSV (from string). 실제 파일을 쓰려면 File input + Papa.parse(file, ...) 사용
+    Papa.parse(csvData, {
+      header:true,
+      skipEmptyLines:true,
+      complete: (res)=>{
+        try {
+          processData(res.data || []);
+        } catch (e) {
+          console.error(e);
+          loadingEl.textContent = 'PARSING ERROR';
+        }
+      }
+    });
+  </script>
+</body>
+</html>
