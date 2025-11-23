@@ -7,8 +7,6 @@ let samples = [];          // { text, label, x, y, layer, idxInLabel }
 let labelColor = {};       // 라벨별 색상 (p5 color)
 let labelCounts = {};      // 라벨별 샘플 개수
 
-// Google Fonts에서 가져온 메인 폰트
-let mainFont;
 
 // 뷰(카메라) 회전/줌
 let rotX = -0.5;           // 위에서 살짝 내려다보는 각도
@@ -38,23 +36,15 @@ const labelAngles = {
   L2_hate:   Math.PI / 4       // 45도 ↘
 };
 
+// 새 버전
 function preload() {
-  // 🔥 Google Fonts에서 직접 폰트 파일 로드 (Regular 400)
-  // 다른 weight 쓰고 싶으면 URL만 바꿔주면 됨.
-  mainFont = loadFont(
-    'https://fonts.gstatic.com/s/notosanskr/v25/Pby6FmXiEBPT4ITbgNA5CgmOelzY7GDt.ttf'
-  );
-
-  // CSV 로드
   table = loadTable('data/K-HATERS_train.csv', 'csv', 'header');
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight, WEBGL); // WEBGL 모드
   colorMode(HSB, 360, 100, 100, 100);
-
-  // preload에서 로드된 폰트 적용
-  textFont(mainFont);
+  textFont('Noto Sans KR');   // 파일 로딩 없이 이름만 지정
   textSize(12);
   textAlign(LEFT, TOP);
   textWrap(WORD);
@@ -264,3 +254,4 @@ function windowResized() {
   resizeCanvas(windowWidth, windowHeight, WEBGL);
   redraw();
 }
+
