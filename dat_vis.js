@@ -7,8 +7,8 @@ let samples = [];          // { text, label, x, y, layer, idxInLabel }
 let labelColor = {};       // 라벨별 색상 (p5 color)
 let labelCounts = {};      // 라벨별 샘플 개수
 
-// 폰트 이름 (Google Fonts)
-const MAIN_FONT = 'Noto Sans KR';
+// Google Fonts에서 가져온 메인 폰트
+let mainFont;
 
 // 뷰(카메라) 회전/줌
 let rotX = -0.5;           // 위에서 살짝 내려다보는 각도
@@ -25,10 +25,10 @@ let MAX_PER_LABEL = 1500;      // 라벨당 최대 샘플 수
 
 const BAND_SIZE    = 4;        // 한 "층(layer)"에 몇 줄씩 둘지
 const BASE_DIST    = 90;       // 중심에서 첫 층까지 거리
-const STEP_DIST    = 95;       // 층이 바깥으로 퍼지는 정도 (기존 65 → 더 멀리)
-const PERP_SPACING = 45;       // 선에 수직한 방향으로 퍼지는 폭 (기존 30 → 더 넓게)
+const STEP_DIST    = 95;       // 층이 바깥으로 퍼지는 정도
+const PERP_SPACING = 45;       // 선에 수직한 방향으로 퍼지는 폭
 
-const DEPTH_STEP   = 40;       // layer 당 z축 간격 (기존 28 → 깊이감 강화)
+const DEPTH_STEP   = 40;       // layer 당 z축 간격 (깊이감)
 
 // 각 라벨이 차지하는 X 방향 각도 (라디안)
 const labelAngles = {
@@ -39,8 +39,13 @@ const labelAngles = {
 };
 
 function preload() {
-  // 이제 폰트는 Google Fonts로 로드되므로
-  // 따로 loadFont 할 필요 없음.
+  // 🔥 Google Fonts에서 직접 폰트 파일 로드 (Regular 400)
+  // 다른 weight 쓰고 싶으면 URL만 바꿔주면 됨.
+  mainFont = loadFont(
+    'https://fonts.gstatic.com/s/notosanskr/v25/Pby6FmXiEBPT4ITbgNA5CgmOelzY7GDt.ttf'
+  );
+
+  // CSV 로드
   table = loadTable('data/K-HATERS_train.csv', 'csv', 'header');
 }
 
@@ -48,7 +53,8 @@ function setup() {
   createCanvas(windowWidth, windowHeight, WEBGL); // WEBGL 모드
   colorMode(HSB, 360, 100, 100, 100);
 
-  textFont(MAIN_FONT);
+  // preload에서 로드된 폰트 적용
+  textFont(mainFont);
   textSize(12);
   textAlign(LEFT, TOP);
   textWrap(WORD);
@@ -87,7 +93,7 @@ function draw() {
   rotateX(rotX);
   rotateY(rotY);
 
-  // 축(X 모양) 숨김: drawXGrid3D는 비워둠
+  // 축(X 모양) 비워둠: drawXGrid3D는 아무것도 안 그림
   drawXGrid3D();
   drawSamples3D();
 
@@ -156,8 +162,7 @@ function computeWorldPosFor(label, idx) {
 // ===== 3D 그리기 =====
 
 function drawXGrid3D() {
-  // 축(흰색 X 라인) 숨김
-  // 원하면 여기서 배경 가이드라인을 다시 넣을 수 있음.
+  // 축(흰 X 라인) 숨김 — 필요하면 여기서 다시 그려도 됨
 }
 
 function drawSamples3D() {
