@@ -7,6 +7,13 @@ let samples = [];          // { text, label, x, y, layer, idxInLabel }
 let labelColor = {};       // 라벨별 색상 (p5 color)
 let labelCounts = {};      // 라벨별 샘플 개수
 
+let mainFont;
+
+function preload() {
+  mainFont = loadFont('fonts/NotoSansKR-Regular.otf');  // 또는 .otf
+  table = loadTable('data/K-HATERS_train.csv', 'csv', 'header');
+}
+
 
 // 뷰(카메라) 회전/줌
 let rotX = -0.5;           // 위에서 살짝 내려다보는 각도
@@ -36,15 +43,10 @@ const labelAngles = {
   L2_hate:   Math.PI / 4       // 45도 ↘
 };
 
-// 새 버전
-function preload() {
-  table = loadTable('data/K-HATERS_train.csv', 'csv', 'header');
-}
-
 function setup() {
   createCanvas(windowWidth, windowHeight, WEBGL); // WEBGL 모드
   colorMode(HSB, 360, 100, 100, 100);
-  textFont('Noto Sans KR');   // 파일 로딩 없이 이름만 지정
+  textFont(mainFont);   
   textSize(12);
   textAlign(LEFT, TOP);
   textWrap(WORD);
@@ -254,4 +256,5 @@ function windowResized() {
   resizeCanvas(windowWidth, windowHeight, WEBGL);
   redraw();
 }
+
 
