@@ -7,8 +7,8 @@ let samples = [];          // { text, label, x, y, layer, idxInLabel }
 let labelColor = {};       // 라벨별 색상 (p5 color)
 let labelCounts = {};      // 라벨별 샘플 개수
 
-// 폰트
-let mainFont;
+// 폰트 이름 (Google Fonts)
+const MAIN_FONT = 'Noto Sans KR';
 
 // 뷰(카메라) 회전/줌
 let rotX = -0.5;           // 위에서 살짝 내려다보는 각도
@@ -24,10 +24,11 @@ let isDragging = false;
 let MAX_PER_LABEL = 1500;      // 라벨당 최대 샘플 수
 
 const BAND_SIZE    = 4;        // 한 "층(layer)"에 몇 줄씩 둘지
-const BASE_DIST    = 95;       // 중심에서 첫 층까지 거리
-const STEP_DIST    = 95;   // 더 멀리 outward spread
-const PERP_SPACING = 45;   // 더 폭넓게 spread
-const DEPTH_STEP   = 40;
+const BASE_DIST    = 90;       // 중심에서 첫 층까지 거리
+const STEP_DIST    = 95;       // 층이 바깥으로 퍼지는 정도 (기존 65 → 더 멀리)
+const PERP_SPACING = 45;       // 선에 수직한 방향으로 퍼지는 폭 (기존 30 → 더 넓게)
+
+const DEPTH_STEP   = 40;       // layer 당 z축 간격 (기존 28 → 깊이감 강화)
 
 // 각 라벨이 차지하는 X 방향 각도 (라디안)
 const labelAngles = {
@@ -38,8 +39,8 @@ const labelAngles = {
 };
 
 function preload() {
-  // 폰트와 데이터 로드
-  mainFont = loadFont('fonts/NotoSansKR-Regular.otf');
+  // 이제 폰트는 Google Fonts로 로드되므로
+  // 따로 loadFont 할 필요 없음.
   table = loadTable('data/K-HATERS_train.csv', 'csv', 'header');
 }
 
@@ -47,7 +48,7 @@ function setup() {
   createCanvas(windowWidth, windowHeight, WEBGL); // WEBGL 모드
   colorMode(HSB, 360, 100, 100, 100);
 
-  textFont(mainFont);
+  textFont(MAIN_FONT);
   textSize(12);
   textAlign(LEFT, TOP);
   textWrap(WORD);
@@ -86,6 +87,7 @@ function draw() {
   rotateX(rotX);
   rotateY(rotY);
 
+  // 축(X 모양) 숨김: drawXGrid3D는 비워둠
   drawXGrid3D();
   drawSamples3D();
 
@@ -154,6 +156,8 @@ function computeWorldPosFor(label, idx) {
 // ===== 3D 그리기 =====
 
 function drawXGrid3D() {
+  // 축(흰색 X 라인) 숨김
+  // 원하면 여기서 배경 가이드라인을 다시 넣을 수 있음.
 }
 
 function drawSamples3D() {
@@ -179,8 +183,8 @@ function drawSamples3D() {
     let col = color(labelColor[s.label]);
 
     // 🔥 layer별 투명도 15% 감소
-    let alpha = 100 - 18 * layer;
-    if (alpha < 10) alpha = 10;
+    let alpha = 100 - 15 * layer;
+    if (alpha < 20) alpha = 20;
     col.setAlpha(alpha);
 
     fill(col);
