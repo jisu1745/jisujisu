@@ -10,7 +10,7 @@ let labelCounts = {};      // 라벨별 샘플 개수
 let mainFont;
 
 function preload() {
-  mainFont = loadFont('fonts/NotoSansKR-Regular.otf');  // 또는 .otf
+  mainFont = loadFont('fonts/NotoSansKR-Regular.ttf');  //
   table = loadTable('data/K-HATERS_train.csv', 'csv', 'header');
 }
 
@@ -256,5 +256,6 @@ function windowResized() {
   resizeCanvas(windowWidth, windowHeight, WEBGL);
   redraw();
 }
+
 
 
