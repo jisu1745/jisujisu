@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>Expressive Energy vs Hate Level</title>
+
+  <!-- p5.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.2/p5.min.js"></script>
+  <!-- PapaParse for CSV -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Noto Sans KR", sans-serif;
+      background: #050608;
+      color: #f5f5f5;
+      overflow: hidden;
+    }
+
+    #ui-container {
+      position: absolute;
+      right: 16px;
+      top: 16px;
+      width: 280px;
+      padding: 12px 14px;
+      background: rgba(10, 10, 15, 0.94);
+      border-radius: 12px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+      font-size: 12px;
+      backdrop-filter: blur(8px);
+      z-index: 10;
+    }
+
+    #ui-container h2 {
+      font-size: 14px;
+      margin: 0 0 6px 0;
+      font-weight: 600;
+    }
+
+    #ui-subtitle {
+      font-size: 11px;
+      color: #b5b5c5;
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+
+    #mode-toggle {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .mode-button {
+      flex: 1;
+      font-size: 11px;
+      padding: 4px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(180, 180, 210, 0.4);
+      background: rgba(15, 15, 25, 0.9);
+      color: #ddd;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .mode-button.active {
+      background: linear-gradient(135deg, #4c6fff, #ff6fb1);
+      border-color: transparent;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .slider-group {
+      margin: 8px 0 6px 0;
+    }
+
+    .slider-group label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+
+    .slider-group label span.value {
+      color: #aaa;
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      width: 100%;
+    }
+
+    #mode-description {
+      font-size: 11px;
+      color: #a6a6bb;
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    #legend {
+      font-size: 11px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-top: 6px;
+      margin-top: 6px;
+      color: #aaa;
+      line-height: 1.45;
+    }
+
+    #canvas-container {
+      position: absolute;
+      left: 0;
+      top: 0;
+      right: 300px; /* leave room for the UI panel */
+      bottom: 0;
+    }
+
+    .label-pill {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 999px;
+      margin-right: 4px;
+      font-size: 10px;
+    }
+
+    /* HSB 팔레트 느낌과 맞춘 RGB 톤 */
+    .pill-normal   { background: rgba(70, 115, 255, 0.18); color: #a7c2ff; border: 1px solid rgba(70,115,255,0.5); }   /* 파랑 (210º) */
+    .pill-off      { background: rgba(155, 90, 255, 0.18); color: #d2b3ff; border: 1px solid rgba(155,90,255,0.5); }   /* 보라 (270º) */
+    .pill-l1       { background: rgba(215, 80, 255, 0.18); color: #f0b5ff; border: 1px solid rgba(215,80,255,0.5); }   /* 자주 (305º) */
+    .pill-l2       { background: rgba(255, 80, 80, 0.2);   color: #ffb3b3; border: 1px solid rgba(255,80,80,0.55); }   /* 빨강 (0º) */
+
+    /* 우측 하단 링크 – 노란 키치 박스 */
+    #sampler-link {
+      position: absolute;
+      right: 16px;
+      bottom: 12px;
+      font-size: 11px;
+      color: #3a2600;
+      text-decoration: none;
+      background: linear-gradient(135deg, #ffe45e, #ffc857);
+      border-radius: 10px; /* 직사각형 느낌 */
+      padding: 8px 14px;
+      border: 1px solid rgba(180, 130, 10, 0.9);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.45);
+      backdrop-filter: blur(6px);
+      z-index: 9;
+      font-style: italic;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transform: translateY(0);
+      transition:
+        background 0.15s ease-out,
+        transform 0.15s ease-out,
+        box-shadow 0.15s ease-out;
+    }
+
+    #sampler-link::after {
+      content: "↗";
+      font-style: normal;
+      font-size: 11px;
+    }
+
+    #sampler-link:hover {
+      background: linear-gradient(135deg, #fff08a, #ffd36e);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.55);
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body>
+  <div id="canvas-container"></div>
+
+  <div id="ui-container">
+    <h2>표현 에너지 vs 혐오 레벨</h2>
+    <div id="ui-subtitle">
+      각 점은 한국 온라인 댓글 데이터의 한 문장입니다.
+      사분면은 라벨(normal / offensive / L1_hate / L2_hate)을, 
+      아래 필터는 선택한 표현 에너지 축에서 상·하위 문장만 남기도록 조정합니다.
+    </div>
+
+    <!-- 모드 선택: Semantic vs Emotional -->
+    <div id="mode-toggle">
+      <button class="mode-button active" data-mode="sd">Semantic Density</button>
+      <button class="mode-button" data-mode="ea">Emotional Amplitude</button>
+    </div>
+
+    <!-- 단일 슬라이더: 선택된 모드에 따라 의미가 바뀜 -->
+    <div class="slider-group">
+      <label>
+        <span id="energy-label-text">Semantic Density</span>
+        <span class="value" id="energy-value">중간</span>
+      </label>
+      <input id="energy-slider" type="range" min="0" max="100" value="50" />
+    </div>
+
+    <div id="mode-description">
+      문장을 의미 공간에 임베딩했을 때 벡터의 길이에 해당하는 값입니다.
+      값이 클수록 더 많은 의미 요소가 응축된, 정보량이 높은 문장으로 볼 수 있습니다.
+    </div>
+
+    <div id="legend">
+      <div style="margin-bottom:4px;">
+        <strong>이 시각화의 목적</strong><br/>
+        표현적 에너지(의미 밀도 / 감정 진폭)를 어떻게 정의하든,
+        강한 표현이 꼭 높은 혐오 레벨(L2_hate)과 1:1로 대응하는지,
+        혹은 라벨 전체에 걸쳐 고르게 분포하는지를 시각적으로 탐색합니다.
+      </div>
+
+      <div style="margin-top:4px; margin-bottom:4px;">
+        <span class="label-pill pill-normal">normal</span>
+        <span class="label-pill pill-off">offensive</span>
+        <span class="label-pill pill-l1">L1_hate</span>
+        <span class="label-pill pill-l2">L2_hate</span>
+      </div>
+
+      <div style="margin-top:4px;">
+        현재 필터: <span id="active-mode-text">Semantic Density</span><br/>
+        슬라이더 50 = 필터 없음.<br/>
+        오른쪽 끝으로 갈수록 상위 에너지 문장 몇 개만 남고,<br/>
+        왼쪽 끝으로 갈수록 하위 에너지 문장 몇 개만 남습니다.
+      </div>
+    </div>
+  </div>
+
+  <!-- 우측 하단 3D sampler 링크 (노란 키치 박스) -->
+  <a
+    id="sampler-link"
+    href="https://jisu1745.github.io/jisujisu/dat_vis.html"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    Check out our data-sampler in 3D!
+  </a>
+
+  <script>
+    // ==== 데이터 구조 ==== 
+    // points: {text, label, sd, ea, x, y, color}
+    let points = [];
+    // metrics.*.values: 소트된 값 배열 (분포 기반 필터링용)
+    let metrics = {
+      sd: { values: [], median: 0 },
+      ea: { values: [], median: 0 },
+    };
+
+    let hoveredPoint = null;
+    let canvasW, canvasH;
+
+    // 현재 활성화된 에너지 축: "sd" 또는 "ea"
+    let activeMetric = "sd";
+
+    let energySlider, energyLabel, energyLabelText, activeModeText, modeDescription;
+
+    // ==== p5.js 필수 함수 ====
+    function setup() {
+      const container = document.getElementById('canvas-container');
+      canvasW = container.clientWidth;
+      canvasH = container.clientHeight;
+
+      let cnv = createCanvas(canvasW, canvasH);
+      cnv.parent('canvas-container');
+
+      // HSB 컬러 모드 (0~360, 0~100, 0~100, 0~100)
+      colorMode(HSB, 360, 100, 100, 100);
+
+      textFont('system-ui');
+      textSize(11);
+      noStroke();
+
+      energySlider      = document.getElementById('energy-slider');
+      energyLabel       = document.getElementById('energy-value');
+      energyLabelText   = document.getElementById('energy-label-text');
+      activeModeText    = document.getElementById('active-mode-text');
+      modeDescription   = document.getElementById('mode-description');
+
+      energySlider.addEventListener('input', onFilterChange);
+
+      // 모드 토글 버튼 설정
+      const modeButtons = document.querySelectorAll('.mode-button');
+      modeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const mode = btn.dataset.mode; // "sd" or "ea"
+          setActiveMetric(mode);
+        });
+      });
+
+      setActiveMetric("sd"); // 초기: Semantic Density
+
+      loadCSVData();
+    }
+
+    function windowResized() {
+      const container = document.getElementById('canvas-container');
+      canvasW = container.clientWidth;
+      canvasH = container.clientHeight;
+      resizeCanvas(canvasW, canvasH);
+      // 위치 재계산
+      layoutPointsByLabel();
+    }
+
+    function draw() {
+      background(230, 20, 5); // 약간 어두운 톤 (HSB 기준)
+
+      drawLabelGrid();
+
+      noStroke();
+      for (let p of points) {
+        if (!passesFilters(p)) continue;
+        fill(p.color);
+        circle(p.x, p.y, 4);
+      }
+
+      drawHoverTooltip();
+    }
+
+    function mouseMoved() {
+      hoveredPoint = findHoveredPoint(mouseX, mouseY);
+    }
+
+    // ==== 모드 변경 ====
+    function setActiveMetric(mode) {
+      activeMetric = mode; // "sd" 또는 "ea"
+
+      // UI 버튼 active 클래스 업데이트
+      const modeButtons = document.querySelectorAll('.mode-button');
+      modeButtons.forEach(btn => {
+        const isActive = btn.dataset.mode === mode;
+        btn.classList.toggle('active', isActive);
+      });
+
+      // 라벨 텍스트 + 설명 변경
+      if (mode === "sd") {
+        energyLabelText.textContent = "Semantic Density";
+        activeModeText.textContent  = "Semantic Density";
+        modeDescription.textContent =
+          "문장을 의미 공간에 임베딩했을 때 벡터의 길이에 해당하는 값입니다. " +
+          "값이 클수록 더 많은 의미 요소가 응축된, 정보량이 높은 문장으로 볼 수 있습니다.";
+      } else {
+        energyLabelText.textContent = "Emotional Amplitude";
+        activeModeText.textContent  = "Emotional Amplitude";
+        modeDescription.textContent =
+          "전체 댓글의 평균 의미 벡터에서 얼마나 떨어져 있는지에 해당하는 값입니다. " +
+          "값이 클수록 데이터셋의 ‘평균적인 발화’에서 더 벗어난, 감정적으로 튀는 표현에 가깝게 볼 수 있습니다.";
+      }
+
+      // 슬라이더 값은 그대로 두고, 라벨만 갱신
+      onFilterChange();
+    }
+
+    // ==== CSV 로드 ====
+    function loadCSVData() {
+  // 여러 개로 쪼갠 CSV 파일 목록
+  const files = [
+    'data/comments_with_metrics_part1.csv',
+    'data/comments_with_metrics_part2.csv',
+    // 더 쪼갰다면 여기 이어서 추가:
+    // 'data/comments_with_metrics_part3.csv',
+    // ...
+  ];
+
+  let allRows = [];
+  let loadedCount = 0;
+
+  files.forEach((filePath) => {
+    Papa.parse(filePath, {
+      download: true,
+      header: true,
+      dynamicTyping: true,
+      complete: function(results) {
+        console.log('Loaded from', filePath, ':', results.data.length, 'rows');
+        allRows = allRows.concat(results.data);
+        loadedCount += 1;
+
+        // 모든 파일 로딩이 끝난 시점에 한 번만 preprocessRows 호출
+        if (loadedCount === files.length) {
+          console.log('Total merged rows:', allRows.length);
+          preprocessRows(allRows);
+        }
+      }
+    });
+  });
+}
+
+
+    function preprocessRows(rows) {
+      // 1) 유효한 row만 필터
+      const valid = [];
+      for (let r of rows) {
+        if (!r.text || !r.label) continue;
+        if (isNaN(r.SemanticDensity) || isNaN(r.EmotionalAmplitude)) continue;
+        valid.push(r);
+      }
+
+      if (valid.length === 0) {
+        console.warn("유효한 데이터가 없습니다.");
+        return;
+      }
+
+      // 2) 정렬 배열 생성 (분포 기반 필터링 및 median 계산용)
+      const sdArr = valid.map(r => r.SemanticDensity).sort((a,b) => a - b);
+      const eaArr = valid.map(r => r.EmotionalAmplitude).sort((a,b) => a - b);
+
+      const n = sdArr.length;
+      const midIdx  = Math.floor(n * 0.5);
+
+      metrics.sd.values = sdArr;
+      metrics.sd.median = sdArr[midIdx];
+
+      metrics.ea.values = eaArr;
+      metrics.ea.median = eaArr[midIdx];
+
+      console.log('metrics:', metrics);
+
+      // 3) 포인트 생성 (레이블 컬러 HSB 팔레트 적용)
+      points = valid.map(r => ({
+        text: r.text,
+        label: r.label,
+        sd: r.SemanticDensity,
+        ea: r.EmotionalAmplitude,
+        x: 0,
+        y: 0,
+        color: labelColor(r.label)
+      }));
+
+      layoutPointsByLabel();
+    }
+
+    // ==== 레이아웃: 라벨별 2x2 격자 배치 ====
+    function layoutPointsByLabel() {
+      if (!points || points.length === 0) return;
+
+      const pad = 30;
+      const halfW = canvasW / 2;
+      const halfH = canvasH / 2;
+
+      // 사분면: normal / offensive / L1 / L2
+      // TL: normal, TR: offensive, BL: L1, BR: L2
+      for (let p of points) {
+        let cx, cy, wSpan, hSpan;
+
+        if (p.label === 'normal') {
+          cx = pad; wSpan = halfW - pad * 2;
+          cy = pad; hSpan = halfH - pad * 2;
+          p.x = random(cx, cx + wSpan);
+          p.y = random(cy, cy + hSpan);
+        } else if (p.label === 'offensive') {
+          cx = halfW + pad; wSpan = halfW - pad * 2;
+          cy = pad; hSpan = halfH - pad * 2;
+          p.x = random(cx, cx + wSpan);
+          p.y = random(cy, cy + hSpan);
+        } else if (p.label === 'L1_hate' || p.label === 'L1hate') {
+          cx = pad; wSpan = halfW - pad * 2;
+          cy = halfH + pad; hSpan = halfH - pad * 2;
+          p.x = random(cx, cx + wSpan);
+          p.y = random(cy, cy + hSpan);
+        } else if (p.label === 'L2_hate' || p.label === 'L2hate' || p.label === 'L2_hate') {
+          cx = halfW + pad; wSpan = halfW - pad * 2;
+          cy = halfH + pad; hSpan = halfH - pad * 2;
+          p.x = random(cx, cx + wSpan);
+          p.y = random(cy, cy + hSpan);
+        } else {
+          // 기타 라벨은 중앙 근처에 랜덤
+          p.x = random(pad, canvasW - pad);
+          p.y = random(pad, canvasH - pad);
+        }
+      }
+    }
+
+    // ==== HSB 팔레트에 맞춘 labelColor ====
+    function labelColor(label) {
+      // color(H, S, B, A) in HSB mode
+      if (label === 'normal')    return color(210, 80, 100, 95); // 파랑
+      if (label === 'offensive') return color(270, 80, 100, 95); // 보라
+      if (label.startsWith('L1'))return color(305, 80, 100, 95); // 자주색
+      if (label.startsWith('L2'))return color(0,   90, 100, 95); // 빨강
+      return color(0, 0, 70, 80);
+    }
+
+    // ==== 필터 통과 여부 ====
+    function passesFilters(p) {
+      if (!p) return false;
+
+      const sliderNorm = parseFloat(energySlider.value) / 100.0;
+
+      const stat = metrics[activeMetric];
+      const v = (activeMetric === "sd") ? p.sd : p.ea;
+
+      return filterOneMetric(v, stat, sliderNorm);
+    }
+
+    // 슬라이더 0~1 → 유지 비율 기반 필터
+    // center(0.5)에서는 거의 전체 유지, 양 극단(0 / 1)에서는 몇 개만 남도록 설계
+    function filterOneMetric(v, stat, sliderNorm) {
+      const center = 0.5;
+      const eps = 0.001;
+      const arr = stat.values;
+      const n = arr.length;
+
+      if (n === 0) return false;
+
+      // 중앙 근처면 필터 없음
+      if (Math.abs(sliderNorm - center) < eps) {
+        return true;
+      }
+
+      // 최소 유지 개수: 시각적으로 보이게 대략 3개
+      const minCount = Math.min(3, n);
+      const minFrac = minCount / n;
+
+      if (sliderNorm > center) {
+        // 상위 에너지 필터
+        const tail = (sliderNorm - center) / (1 - center); // 0~1
+        // tail이 0일 땐 전체 유지, 1일 땐 minFrac만 유지
+        let keptFrac = Math.pow(1 - tail, 3); // 부드럽게 1→0
+        if (keptFrac < minFrac) keptFrac = minFrac;
+
+        // keptFrac 만큼 상위에서 유지 → 하한 인덱스 구하기
+        const startIdx = Math.floor(n * (1 - keptFrac));
+        const idx = Math.min(Math.max(startIdx, 0), n - 1);
+        const threshold = arr[idx];
+
+        return v >= threshold;
+
+      } else {
+        // 하위 에너지 필터
+        const tail = (center - sliderNorm) / center; // 0~1
+        let keptFrac = Math.pow(1 - tail, 3);
+        if (keptFrac < minFrac) keptFrac = minFrac;
+
+        // keptFrac 만큼 하위에서 유지 → 상한 인덱스 구하기
+        const endIdx = Math.floor(n * keptFrac) - 1;
+        const idx = Math.min(Math.max(endIdx, 0), n - 1);
+        const threshold = arr[idx];
+
+        return v <= threshold;
+      }
+    }
+
+    // ==== 슬라이더 변경 시 ====
+    function onFilterChange() {
+      const val = parseInt(energySlider.value, 10);
+
+      const toLabel = (v) => {
+        if (v === 50) return '중간';
+        if (v > 50)   return '+' + (v - 50);
+        return '-' + (50 - v);
+      };
+
+      energyLabel.textContent = toLabel(val);
+    }
+
+    // ==== 격자 및 라벨 ====
+    function drawLabelGrid() {
+      stroke(230, 15, 30, 60);
+      strokeWeight(1);
+      const halfW = canvasW / 2;
+      const halfH = canvasH / 2;
+      line(halfW, 0, halfW, canvasH);
+      line(0, halfH, canvasW, halfH);
+
+      noStroke();
+      fill(230, 10, 85); // 밝은 회색 톤
+      textAlign(LEFT, TOP);
+      text('normal', 16, 10);
+      textAlign(RIGHT, TOP);
+      text('offensive', canvasW - 16, 10);
+      textAlign(LEFT, BOTTOM);
+      text('L1_hate', 16, halfH - 10 + halfH);
+      textAlign(RIGHT, BOTTOM);
+      text('L2_hate', canvasW - 16, halfH - 10 + halfH);
+
+      // 살짝 투명한 타이틀
+      textAlign(LEFT, BOTTOM);
+      fill(230, 8, 80, 80);
+      textSize(13);
+      text('Expressive Energy vs Hate Level', 16, canvasH - 16);
+      textSize(11);
+    }
+
+    // ==== 호버링 ====
+    function findHoveredPoint(mx, my) {
+      const radius = 8;
+      let closest = null;
+      let bestDist = Infinity;
+
+      for (let p of points) {
+        if (!passesFilters(p)) continue;
+        const d = dist(mx, my, p.x, p.y);
+        if (d < radius && d < bestDist) {
+          bestDist = d;
+          closest = p;
+        }
+      }
+      return closest;
+    }
+
+    function drawHoverTooltip() {
+      if (!hoveredPoint) return;
+
+      const padding = 8;
+      const maxWidth = 320;
+      const textLines = wrapText(hoveredPoint.text, maxWidth - padding * 2);
+
+      // 박스 위치
+      let bx = mouseX + 14;
+      let by = mouseY + 14;
+
+      const lineHeight = 14;
+      const boxH = padding * 2 + textLines.length * lineHeight + 30;
+      const boxW = maxWidth;
+
+      if (bx + boxW > canvasW - 10) bx = canvasW - boxW - 10;
+      if (by + boxH > canvasH - 10) by = canvasH - boxH - 10;
+
+      // 박스
+      noStroke();
+      fill(230, 30, 8, 95);
+      rect(bx, by, boxW, boxH, 10);
+
+      // 상단 라벨 + 메트릭
+      fill(0, 0, 95);
+      textAlign(LEFT, TOP);
+      const labelStr = hoveredPoint.label;
+      text(labelStr, bx + padding, by + padding);
+
+      const mStr = `SD: ${hoveredPoint.sd.toFixed(2)}  EA: ${hoveredPoint.ea.toFixed(2)}`;
+      fill(0, 0, 80);
+      text(mStr, bx + padding, by + padding + 14);
+
+      // 문장 본문
+      fill(0, 0, 100);
+      let ty = by + padding + 30;
+      for (let line of textLines) {
+        text(line, bx + padding, ty);
+        ty += lineHeight;
+      }
+    }
+
+    // 간단한 텍스트 줄바꿈
+    function wrapText(str, maxWidth) {
+      const words = str.split(/\s+/);
+      const lines = [];
+      let current = '';
+
+      for (let w of words) {
+        const test = current ? current + ' ' + w : w;
+        if (textWidth(test) > maxWidth) {
+          if (current) lines.push(current);
+          current = w;
+        } else {
+          current = test;
+        }
+      }
+      if (current) lines.push(current);
+      return lines.slice(0, 6); // 너무 길면 6줄까지만
+    }
+  </script>
+</body>
+</html>
