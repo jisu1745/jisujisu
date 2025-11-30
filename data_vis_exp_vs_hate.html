@@ -179,17 +179,12 @@
     <h2>표현 에너지 vs 혐오 레벨</h2>
   <div id="ui-purpose" style="font-size:11px; color:#b5b5c5; line-height:1.5; margin:6px 0 8px 0;">
     <strong>이 시각화의 목적</strong><br/>
-    본 프로젝트의 주제는 온라인 공간상 한국어 발화들의 표현적 에너지입니다.
-    그러나, 혐오 레벨이 높으면 표현 에너지가 높은 것이 당연하지 않겠냐는 의문이 들 수 있습니다.
-    이에, 표현적 에너지(의미 밀도 / 감정 진폭)를 어떻게 정의하든,
-    강한 표현이 정말 높은 혐오 레벨(L2_hate)과 1:1로 대응하는지,
-    혹은 라벨 전체에 걸쳐 고르게 분포하는지, 주어진 데이터의 통계적 특성을 시각화합니다.
-  </div>
-    <div id="ui-subtitle" style="font-size:11px; color:#b5b5c5; line-height:1.5; margin-bottom:10px;">
     <ul style="padding-left:18px; margin:0;">
-      <li>각 점은 한국 온라인 댓글 데이터의 한 문장입니다.</li>
-      <li>사분면은 라벨(normal / offensive / L1_hate / L2_hate)을, 아래 필터는 선택한 표현 에너지 축에서 상·하위 문장만 남기도록 조정합니다.</li>
-      <li>에너지 축은 연세대학교 인공지능융합학과 석사 과정 학생 jhgan00의 한국어 임베딩 모델 <em>ko-sentence-transformers</em>를 사용하였습니다. (<a href="https://github.com/jhgan00/ko-sentence-transformers" target="_blank" rel="noopener noreferrer" style="color:#9fb4ff;">GitHub 링크</a>)</li>
+    <li>본 프로젝트의 주제는 온라인 공간상 한국어 발화들의 표현적 에너지입니다.</li>
+    <li>그러나, 혐오 레벨이 높으면 표현 에너지가 높은 게 당연하지 않냐는 의문이 들 수 있습니다.</li>
+    <li>이에, 표현적 에너지(의미 밀도 / 감정 진폭)를 어떻게 정의하든,
+    강한 표현이 정말 높은 혐오 레벨(L2_hate)과 1:1로 대응하는지,
+    혹은 라벨 전체에 걸쳐 고르게 분포하는지, 주어진 데이터의 통계적 특성을 시각화합니다.</li>
     </ul>
   </div>
 
@@ -199,6 +194,14 @@
       <button class="mode-button" data-mode="ea">Emotional Amplitude</button>
     </div>
 
+<div id="ui-subtitle" style="font-size:11px; color:#b5b5c5; line-height:1.5; margin-bottom:10px;">
+    <ul style="padding-left:18px; margin:0;">
+      <li>각 점은 한국 온라인 댓글 데이터의 한 문장입니다.</li>
+      <li>사분면은 라벨(normal / offensive / L1_hate / L2_hate)을, 아래 필터는 선택한 표현 에너지 축에서 상·하위 문장만 남기도록 조정합니다.</li>
+      <li>에너지 축은 연세대학교 인공지능융합학과 석사 과정 학생 jhgan00의 한국어 임베딩 모델 <em>ko-sentence-transformers</em>를 사용하였습니다. (<a href="https://github.com/jhgan00/ko-sentence-transformers" target="_blank" rel="noopener noreferrer" style="color:#9fb4ff;">GitHub 링크</a>)</li>
+    </ul>
+  </div>
+    
     <!-- 단일 슬라이더: 선택된 모드에 따라 의미가 바뀜 -->
     <div class="slider-group">
       <label>
@@ -664,4 +667,5 @@
   </script>
 </body>
 </html>
+
 
