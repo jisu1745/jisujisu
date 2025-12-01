@@ -473,6 +473,11 @@
             flex-direction: column;
             align-items: center;
             flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .vampire-box:hover {
+            transform: scale(1.05);
         }
         
         .vampire-placeholder {
@@ -565,6 +570,83 @@
             box-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
         }
         
+        .data-vis-card {
+            display: block;
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px solid transparent;
+            border-image: linear-gradient(135deg, #ff0000, #0066ff) 1;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 50px 0;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .data-vis-card:hover {
+            background: rgba(255, 0, 0, 0.2);
+            transform: scale(1.02);
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.6);
+        }
+        
+        .data-vis-thumbnail {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, rgba(255, 0, 0, 0.3), rgba(0, 102, 255, 0.3));
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .data-vis-thumbnail::before {
+            content: '📊';
+            font-size: 4em;
+            opacity: 0.8;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .data-vis-thumbnail::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .data-vis-title {
+            font-size: 1.8em;
+            color: #fff;
+            font-weight: 500;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .data-vis-subtitle {
+            font-size: 1.1em;
+            color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+            line-height: 1.6;
+        }
+        
         .footer {
             text-align: center;
             margin-top: 60px;
@@ -600,6 +682,12 @@
             </div>
         </div>
         
+        <a href="https://jisu1745.github.io/jisujisu/data_vis_exp_vs_hate" target="_blank" class="data-vis-card">
+            <div class="data-vis-thumbnail"></div>
+            <h3 class="data-vis-title">data visualization</h3>
+            <p class="data-vis-subtitle">표현 에너지 vs 혐오 레벨</p>
+        </a>
+        
         <div class="game-container" id="gameContainer">
             <!-- Game content will be inserted here by JavaScript -->
         </div>
@@ -620,10 +708,12 @@
                 <div class="vampire-placeholder"></div>
                 <div class="vampire-label">L1_Hate</div>
             </div>
-            <div class="vampire-box">
-                <div class="vampire-placeholder"></div>
-                <div class="vampire-label">L2_Hate</div>
-            </div>
+            <a href="L2_hate.html" style="text-decoration: none;">
+                <div class="vampire-box" style="cursor: pointer;">
+                    <div class="vampire-placeholder"></div>
+                    <div class="vampire-label">L2_Hate</div>
+                </div>
+            </a>
         </div>
         
         <div class="ethical-note">
@@ -634,10 +724,6 @@
         <div class="poem">
             <p>Data reference: K-HATERS (Soongsil University HUMANE Lab) – used for research and visualization purposes under academic reference.</p>
             <p>All original comments have been de-identified and aggregated. No individual comment is presented in its full form.</p>
-        </div>
-        
-        <div class="cta-button">
-            <a href="jisu.html">Explore the Works</a>
         </div>
         
         <div class="footer">
@@ -705,23 +791,68 @@
         };
 
         function classifyComment(text) {
-            const lower = text.toLowerCase().replace(/\s/g, '');
+            if (!text || text.trim().length === 0) {
+                return "NORMAL";
+            }
             
-            const l2Keywords = ['죽어', '꺼져', '쓰레기', '벌레', '인간쓰레기', '해충'];
-            if (l2Keywords.some(kw => lower.includes(kw))) {
+            const lower = text.toLowerCase();
+            const noSpace = text.replace(/\s/g, '');
+            const lowerNoSpace = noSpace.toLowerCase();
+            
+            // L2_HATE: 직접적이고 강한 혐오 표현
+            const l2Keywords = [
+                '죽어', '꺼져', '쓰레기', '벌레', '인간쓰레기', '해충', 
+                '죽어버려', '꺼져버려', '사라져', '없어져', 
+                '개새끼', '개같은', '개돼지', '돼지새끼',
+                '니미', '시발', '좆', '개', '병신', '미친',
+                '지옥', '지옥행', '처형', '사형', '교수형'
+            ];
+            if (l2Keywords.some(kw => lower.includes(kw) || lowerNoSpace.includes(kw))) {
                 return "L2_HATE";
             }
             
-            const l1Keywords = ['xx충', '한남', '된장', '김치', '급식', '틀딱', '지역비하'];
-            if (l1Keywords.some(kw => lower.includes(kw))) {
+            // L1_HATE: 집단/세대/지역 비하 표현
+            const l1Keywords = [
+                'xx충', '한남', '된장', '김치', '급식', '틀딱', 
+                '지역비하', '서울충', '경기충', '전라도', '경상도',
+                '조선족', '중국인', '일본인', '외국인',
+                '노인', '노인들', '늙은', '할머니', '할아버지',
+                '학생들', '학생충', '대학생', '고등학생',
+                '여자들', '남자들', '여성들', '남성들',
+                '젊은', '젊은이', '아재', '아저씨', '아줌마'
+            ];
+            if (l1Keywords.some(kw => lower.includes(kw) || lowerNoSpace.includes(kw))) {
                 return "L1_HATE";
             }
             
-            const offensiveKeywords = ['ㅋㅋ', 'ㅉㅉ', '수준', '한심', '어이없', '답없', '병신', '바보'];
-            if (offensiveKeywords.some(kw => lower.includes(kw)) || text.includes('...')) {
+            // OFFENSIVE: 냉소적이고 비꼬는 표현
+            const offensiveKeywords = [
+                'ㅋㅋ', 'ㅉㅉ', 'ㅎㅎ', '헐', '허걱',
+                '수준', '한심', '어이없', '답없', '답이없',
+                '바보', '멍청', '바보같', '멍청이',
+                '웃기', '웃겨', '재밌', '재미있',
+                '...', '??', '!!!', '???',
+                '대체', '도대체', '뭔가', '뭔데',
+                '진짜', '정말', '완전', '너무',
+                '안타깝', '유감', '아쉽'
+            ];
+            if (offensiveKeywords.some(kw => lower.includes(kw) || lowerNoSpace.includes(kw))) {
                 return "OFFENSIVE";
             }
             
+            // 긍정적이거나 중립적인 표현은 NORMAL
+            const positiveKeywords = [
+                '좋아', '좋은', '좋다', '좋네', '좋아요',
+                '감사', '고마', '응원', '힘내', '화이팅',
+                '동의', '맞아', '맞는', '맞네',
+                '이해', '이해해', '이해가',
+                '도움', '도움이', '도와'
+            ];
+            if (positiveKeywords.some(kw => lower.includes(kw))) {
+                return "NORMAL";
+            }
+            
+            // 기본적으로 NORMAL
             return "NORMAL";
         }
 
@@ -836,6 +967,64 @@
         function renderResult() {
             if (!lastLabel) return;
             const info = labelInfo[lastLabel];
+            
+            // L2_HATE일 경우 자동으로 L2_hate.html로 이동
+            if (lastLabel === "L2_HATE") {
+                gameContainer.innerHTML = `
+                    <div class="result-screen">
+                        <div class="result-card">
+                            <div class="result-emoji">${info.emoji}</div>
+                            <h2 class="result-title">${info.title}</h2>
+                            <p class="result-description">${info.description}</p>
+                            <div class="comment-preview">
+                                <p class="comment-preview-label">작성한 댓글:</p>
+                                <p class="comment-preview-text">"${lastComment}"</p>
+                            </div>
+                            <div style="text-align: center; margin: 30px 0; padding: 20px; background: rgba(255, 0, 0, 0.2); border-radius: 10px;">
+                                <p style="font-size: 1.2em; color: #fff; font-weight: bold; margin-bottom: 10px;">
+                                    🚨 L2 Hate 웹사이트로 이동 중입니다...
+                                </p>
+                                <div class="spinner" style="width: 40px; height: 40px; border-width: 3px; margin: 0 auto;"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // 3초 후 자동으로 L2_hate.html로 이동
+                setTimeout(() => {
+                    window.location.href = 'L2_hate.html';
+                }, 3000);
+                return;
+            }
+            
+            // L1_HATE일 경우 자동으로 L1_hate.html로 이동
+            if (lastLabel === "L1_HATE") {
+                gameContainer.innerHTML = `
+                    <div class="result-screen">
+                        <div class="result-card">
+                            <div class="result-emoji">${info.emoji}</div>
+                            <h2 class="result-title">${info.title}</h2>
+                            <p class="result-description">${info.description}</p>
+                            <div class="comment-preview">
+                                <p class="comment-preview-label">작성한 댓글:</p>
+                                <p class="comment-preview-text">"${lastComment}"</p>
+                            </div>
+                            <div style="text-align: center; margin: 30px 0; padding: 20px; background: rgba(255, 0, 0, 0.2); border-radius: 10px;">
+                                <p style="font-size: 1.2em; color: #fff; font-weight: bold; margin-bottom: 10px;">
+                                    ⚠️ L1 Hate 웹사이트로 이동 중입니다...
+                                </p>
+                                <div class="spinner" style="width: 40px; height: 40px; border-width: 3px; margin: 0 auto;"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // 3초 후 자동으로 L1_hate.html로 이동
+                setTimeout(() => {
+                    window.location.href = 'L1_hate.html';
+                }, 3000);
+                return;
+            }
             
             gameContainer.innerHTML = `
                 <div class="result-screen">
