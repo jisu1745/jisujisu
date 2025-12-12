@@ -1,160 +1,35 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="ko">
 
 <head>
   <meta charset="utf-8" />
-  <title>혐오 표현의 우주 | K-HATERS Visualization</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>K-HATERS: Sentence Universe</title>
 
+  <!-- p5.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+
+  <!-- Noto Sans KR (브라우저 폰트 로드) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
 
-  <style>
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: #050510;
-      font-family: 'Noto Sans KR', sans-serif;
-    }
-
-    #panel {
-      position: fixed;
-      left: 20px;
-      top: 20px;
-      width: 360px;
-      color: white;
-      z-index: 9999;
-      background: linear-gradient(135deg, rgba(15, 15, 35, 0.85) 0%, rgba(10, 10, 25, 0.9) 100%);
-      border: 1px solid rgba(100, 120, 180, 0.25);
-      border-radius: 16px;
-      padding: 20px;
-      backdrop-filter: blur(20px);
-      box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.4),
-        0 0 60px rgba(80, 100, 200, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    }
-
-    #title {
-      font-weight: 700;
-      font-size: 22px;
-      margin-bottom: 12px;
-      letter-spacing: 0.5px;
-      background: linear-gradient(90deg, #fff 0%, #a8c0ff 50%, #fff 100%);
-      background-size: 200% auto;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: shimmer 4s ease-in-out infinite;
-    }
-
-    @keyframes shimmer {
-
-      0%,
-      100% {
-        background-position: 0% center;
-      }
-
-      50% {
-        background-position: 200% center;
-      }
-    }
-
-    #help {
-      font-size: 13px;
-      line-height: 1.6;
-      opacity: 0.7;
-      margin-bottom: 14px;
-      font-weight: 300;
-    }
-
-    #chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin: 14px 0;
-    }
-
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 7px 12px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      cursor: pointer;
-      user-select: none;
-      font-size: 12px;
-      font-weight: 400;
-      transition: all 0.2s ease;
-    }
-
-    .chip:hover {
-      background: rgba(255, 255, 255, 0.12);
-      border-color: rgba(255, 255, 255, 0.2);
-      transform: translateY(-1px);
-    }
-
-    .chip[data-on="1"] {
-      background: rgba(255, 255, 255, 0.15);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
-    }
-
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      display: inline-block;
-      box-shadow: 0 0 6px currentColor;
-    }
-
-    #status {
-      font-size: 11px;
-      font-family: 'SF Mono', 'Consolas', monospace;
-      white-space: pre-line;
-      opacity: 0.5;
-      margin-top: 10px;
-      letter-spacing: 0.3px;
-    }
-
-    #csvlink {
-      position: fixed;
-      left: 20px;
-      bottom: 20px;
-      z-index: 9999;
-      color: rgba(255, 255, 255, 0.4);
-      text-decoration: none;
-      font-size: 11px;
-      transition: all 0.2s ease;
-      letter-spacing: 0.5px;
-    }
-
-    #csvlink:hover {
-      color: rgba(255, 255, 255, 0.8);
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
   <div id="panel">
-    <div id="title">K-HATERS: A Universe</div>
-    <div id="help">
-      K-HATERS 데이터셋의 뉴스 댓글 약 20,000개를 시각화한 탐색 도구입니다.<br />
-      각 점은 하나의 댓글이며, 혐오 수준(normal → L2_hate)에 따라 클러스터됩니다.<br /><br />
-      • 드래그: 회전 &nbsp;|&nbsp; 휠: 확대<br />
-      • 타겟 선택 시 해당 혐오 대상 텍스트가 강조됩니다
+    <div class="title">K-HATERS: Sentence Universe</div>
+    <div class="help">
+      - Drag: rotate<br />
+      - Wheel: zoom<br />
+      - Select up to 3 targets → texts are colored / boosted
     </div>
 
     <div id="chips"></div>
-
-    <div id="status">Loading…</div>
+    <div id="status" class="status">Loading…</div>
   </div>
 
-  <a id="csvlink" href="data/K-HATERS_train.csv" target="_blank">open csv</a>
-
-  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
   <script src="new_dat_vis.js"></script>
 </body>
 
