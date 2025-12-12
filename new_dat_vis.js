@@ -1,17 +1,18 @@
 // =======================
-// K-HATERS: Sentence Universe (vA-2)
-// focus: (1) severity clustering axis (normal->L2)
-//        (2) crisp points (tsne-like)
-//        (3) target filter 스르륵 모핑
+// K-HATERS: Sentence Universe (vA-3)
+// - severity axis (normal → L2)
+// - tsne-like dots
+// - smooth zoom → big full sentences
 // =======================
 
 let table;
+let viewShiftX = 0;  // 화면 중심을 world x에서 얼마나 옮길지
 
 let items = [];
 let points = [];
 let isReady = false;
 
-// Camera (2.5D-ish: yaw/pitch + zoom; no auto-spin)
+// Camera (2.5D-ish: yaw/pitch + zoom)
 let zoom = 1.0;
 let targetZoom = 1.0;
 let camYaw = 0.0, targetYaw = 0.0;
@@ -20,10 +21,6 @@ let camPitch = 0.0, targetPitch = 0.0;
 let dragging = false;
 let lastX = 0, lastY = 0;
 
-// filter animation (0~1)
-let filterAnim = 0;
-let filterAnimTarget = 0;
-
 // BG buffer
 let starsG;
 
@@ -31,21 +28,26 @@ let starsG;
 let chipsEl, statusEl;
 
 // ===== Targets & Colors =====
-const TARGETS = ["Age", "Disabled", "Gender", "Individual", "Job", "Others", "Politics", "Region", "Religion"];
-const CHIP_TARGETS = ["Age", "Gender", "Individual", "Job", "Politics", "Region", "Religion"];
+// Disabled / Others 버튼은 제거 (데이터 파싱은 그대로 둠)
+const TARGETS = [
+  "Age",
+  "Gender",
+  "Individual",
+  "Job",
+  "Politics",
+  "Region",
+  "Religion",
+];
 
-
-// 타겟 컬러 (chip + 텍스트 하이라이트 공유)
+// 텍스트 & 도트 하이라이트용 팔레트
 const TARGET_COLORS = {
-  Age: "#0000ff",  // 파란
-  Disabled: "#666666",  // UI에서는 안 쓰지만, 데이터용으로 무난하게
-  Gender: "#20ff00",  // 연두
-  Individual: "#ff3333",  // 강한 빨강
-  Job: "#9848ff",  // 보라
-  Others: "#666666",  // UI X, fallback용
-  Politics: "#ffa4ff",  // 핑크
-  Region: "#00ffff",  // 시안
-  Religion: "#f3ff00"   // 노랑
+  Age: "#0000ff",
+  Gender: "#20ff00",
+  Individual: "#ff3333",
+  Job: "#9848ff",
+  Politics: "#ffa4ff",
+  Region: "#00ffff",
+  Religion: "#f3ff00",
 };
 
 // selected targets (max 3)
@@ -56,77 +58,77 @@ const CONFIG = {
   CSV_PATH: "data/K-HATERS_train.csv",
   MAX_ROWS: 12000,
 
-  // Severity axis
   LABEL_ORDER: ["normal", "offensive", "L1_hate", "L2_hate"],
   LABEL_CENTERS: [
-    { x: -1.10, y: 0.02 }, // normal
-    { x: -0.35, y: -0.03 }, // offensive
-    { x: 0.35, y: 0.02 }, // L1
-    { x: 1.10, y: -0.02 }  // L2
+    { x: -1.1, y: 0.02 },
+    { x: -0.35, y: -0.03 },
+    { x: 0.35, y: 0.02 },
+    { x: 1.1, y: -0.02 }
   ],
 
   BASE_SCALE: 520,
   CLUSTER_TIGHTNESS: 0.68,
   BORDER_BLEND: 0.62,
 
-  // Camera smoothing
   CAMERA_LERP: 0.18,
 
-  // Render caps
   MAX_DOTS_PER_FRAME: 12000,
-  MAX_TEXTS_PER_FRAME: 120,
 
-  // Snippet lengths
+  // Text caps
+  MAX_TEXTS_MAX: 100,   // 중간 줌
+  MAX_TEXTS_MIN: 12,     // 풀 줌 근처
+  MAX_FULL_TEXTS: 5,    // full sentence 최대 개수
+
+  // Snippet lengths (가까워도 80자까지만)
   FAR_SNIP: 14,
   MID_SNIP: 28,
-  NEAR_SNIP: 120,
+  NEAR_SNIP: 80,
 
-  // Text visibility thresholds
   TEXT_NEAR_FACTOR_MIN: 0.42,
   TEXT_SELECTED_BONUS: 0.18,
   TEXT_ZOOM_MIN: 1.05,
 
-  // Depth / ordering
+  // full sentence는 거의 맨 끝에서만
+  FULLTEXT_ZOOM_START: 3.4,
+  FULLTEXT_ZOOM_END: 3.8,  // 보통 ZOOM_MAX랑 같게 두면 편함
+
   DEPTH_BUCKETS: 28,
 
-  // Camera
   ZOOM_MIN: 0.85,
-  ZOOM_MAX: 4.2,
+  ZOOM_MAX: 3.8,
   ZOOM_FACTOR: 1.14,
   PITCH_MIN: -1.05,
   PITCH_MAX: 1.05,
 
-  // Rotation sensitivity
   YAW_SENSITIVITY: 0.008,
   PITCH_SENSITIVITY: 0.006,
 
-  // Point look (tsne-like)
-  // (2) Point look (tsne-like)
-  DOT_CORE_MIN: 1.0,
-  DOT_CORE_MAX: 2.4,
-  DOT_GLOW_MULT: 2.2,
-  DOT_ALPHA_FAR: 12,
-  DOT_ALPHA_NEAR: 110,
+  DOT_CORE_MIN: 1.2,
+  DOT_CORE_MAX: 3.0,
+  DOT_GLOW_MULT: 3.0,
+  DOT_ALPHA_FAR: 18,
+  DOT_ALPHA_NEAR: 120,
 
-  // Selected boosting
-  SELECT_BOOST_ALPHA: 1.55,
-  SELECT_BOOST_SIZE: 1.20,
+  SELECT_BOOST_ALPHA: 1.4,
+  SELECT_BOOST_SIZE: 1.15,
 
-  // Target filter 모핑
   TARGET_ATTRACT: 0.32,
   TARGET_ATTRACT_RADIUS: 220,
-  POS_LERP: 0.08
+  POS_LERP: 0.08,
+  PAN_SENSITIVITY: 0.9,     // 마우스로 가로로 1px 드래그할 때 world에서 얼마나 이동할지
+  VIEW_SHIFT_MAX: 1200,     // 너무 멀리 나가지 않도록 클램프
 };
+
 
 const LABEL_INDEX = Object.fromEntries(
   CONFIG.LABEL_ORDER.map((k, i) => [k, i])
 );
-
 let depthBuckets = [];
 
 // occupancy grid for text placement
 let occGrid = new Map();
-const OCC_CELL = 20;
+const OCC_CELL = 48;   // 기존 40 → 48 로 키우기
+
 
 function canPlaceText(x, y) {
   const gx = Math.floor(x / OCC_CELL);
@@ -140,9 +142,6 @@ function canPlaceText(x, y) {
   return true;
 }
 
-// =======================
-// p5 lifecycle
-// =======================
 function preload() {
   table = loadTable(CONFIG.CSV_PATH, "csv", "header");
 }
@@ -175,45 +174,6 @@ function setup() {
   setStatus(`rows: ${items.length}\nselected: (none)`);
 }
 
-function draw() {
-  if (!isReady) return;
-
-  // smooth camera
-  zoom = lerp(zoom, targetZoom, CONFIG.CAMERA_LERP);
-  camYaw = lerp(camYaw, targetYaw, CONFIG.CAMERA_LERP);
-  camPitch = lerp(camPitch, targetPitch, CONFIG.CAMERA_LERP);
-
-  // filter animation 0~1
-  filterAnim += (filterAnimTarget - filterAnim) * 0.18;
-
-  // target 선택에 따른 포인트 모션
-  updateTargetsMotion();
-
-  background(0);
-  occGrid.clear();
-
-  image(starsG, 0, 0);
-
-  // Dots: additive for tsne glow
-  blendMode(ADD);
-  renderDots();
-  blendMode(BLEND);
-
-  // Text overlay
-  renderTexts();
-
-  const sel = selectedTargets.length ? selectedTargets.join(", ") : "(none)";
-  if (statusEl) {
-    statusEl.textContent =
-      `zoom: ${zoom.toFixed(2)}\n` +
-      `rows: ${points.length}\n` +
-      `selected (max 3): ${sel}`;
-  }
-}
-
-// =======================
-// Data
-// =======================
 function parseData() {
   items = [];
   const n = table.getRowCount();
@@ -239,8 +199,6 @@ function parseData() {
 
 function buildPoints() {
   points = items.map((it, j) => makePoint(it, j));
-
-  // init animated pos
   for (const p of points) {
     p.x = p.wx;
     p.y = p.wy;
@@ -250,11 +208,42 @@ function buildPoints() {
 }
 
 // =======================
-// Target-driven motion
+// DRAW
+// =======================
+function draw() {
+  if (!isReady) return;
+
+  zoom = lerp(zoom, targetZoom, CONFIG.CAMERA_LERP);
+  camYaw = lerp(camYaw, targetYaw, CONFIG.CAMERA_LERP);
+  camPitch = lerp(camPitch, targetPitch, CONFIG.CAMERA_LERP);
+
+  updateTargetsMotion();
+
+  background(0);
+  occGrid.clear();
+
+  image(starsG, 0, 0);
+
+  blendMode(ADD);
+  renderDots();
+  blendMode(BLEND);
+
+  renderTexts();
+
+  const sel = selectedTargets.length ? selectedTargets.join(", ") : "(none)";
+  if (statusEl) {
+    statusEl.textContent =
+      `zoom: ${zoom.toFixed(2)}\n` +
+      `rows: ${points.length}\n` +
+      `selected: ${sel}`;
+  }
+}
+
+// =======================
+// Target-based motion
 // =======================
 function updateTargetsMotion() {
   if (selectedTargets.length === 0) {
-    // 필터 꺼졌을 때는 원래 위치로 회귀
     for (const p of points) {
       p.tx = p.wx;
       p.ty = p.wy;
@@ -269,19 +258,15 @@ function updateTargetsMotion() {
         p.ty = p.wy;
       } else {
         const a = avgAnchorsForPoint(p.targets, selectedTargets, anchors);
-
-        // 기본 attract 강도 × filterAnim (0→1로 올라가면서 서서히 끌려감)
-        const baseK = CONFIG.TARGET_ATTRACT *
-          (0.72 + 0.28 * Math.min(2, hit));
-        const k = baseK * filterAnim;
-
+        const k =
+          CONFIG.TARGET_ATTRACT *
+          (0.72 + 0.28 * Math.min(2, hit)); // multi-target = stronger
         p.tx = lerp(p.wx, a.x, k);
         p.ty = lerp(p.wy, a.y, k);
       }
     }
   }
 
-  // tx,ty 로 슬금슬금 이동
   for (const p of points) {
     p.x += (p.tx - p.x) * CONFIG.POS_LERP;
     p.y += (p.ty - p.y) * CONFIG.POS_LERP;
@@ -289,14 +274,13 @@ function updateTargetsMotion() {
 }
 
 // =======================
-// Rendering
+// Dots
 // =======================
 function renderDots() {
   let dotsDrawn = 0;
 
   for (let b = CONFIG.DEPTH_BUCKETS - 1; b >= 0; b--) {
     const bucket = depthBuckets[b];
-
     for (const idx of bucket) {
       if (dotsDrawn >= CONFIG.MAX_DOTS_PER_FRAME) return;
 
@@ -308,9 +292,14 @@ function renderDots() {
       const hit = intersectionCount(p.targets, selectedTargets);
       const isSelected = selectedTargets.length > 0 && hit > 0;
 
-      let core = lerp(CONFIG.DOT_CORE_MIN, CONFIG.DOT_CORE_MAX, nearFactor) *
+      let core =
+        lerp(CONFIG.DOT_CORE_MIN, CONFIG.DOT_CORE_MAX, nearFactor) *
         (0.65 + 0.35 * zoom);
-      let alpha = lerp(CONFIG.DOT_ALPHA_FAR, CONFIG.DOT_ALPHA_NEAR, nearFactor);
+      let alpha = lerp(
+        CONFIG.DOT_ALPHA_FAR,
+        CONFIG.DOT_ALPHA_NEAR,
+        nearFactor
+      );
 
       if (isSelected) {
         core *= CONFIG.SELECT_BOOST_SIZE;
@@ -320,12 +309,9 @@ function renderDots() {
       const col = severityColor(p.li, nearFactor, isSelected);
 
       noStroke();
-
-      // glow
-      fill(col.r, col.g, col.b, alpha * 0.16);
+      fill(col.r, col.g, col.b, alpha * 0.18);
       circle(s.x, s.y, core * CONFIG.DOT_GLOW_MULT);
 
-      // core
       fill(col.r, col.g, col.b, alpha);
       circle(s.x, s.y, core);
 
@@ -334,17 +320,20 @@ function renderDots() {
   }
 }
 
+// =======================
+// Texts – smooth full-sentence transition
+// =======================
 function renderTexts() {
+  // 너무 멀리서까지는 텍스트 안 보이게
   if (zoom < CONFIG.TEXT_ZOOM_MIN) return;
 
-  let shown = 0;
+  // --- 1) 후보 모으기 ---
+  const candidates = [];
 
   for (let b = CONFIG.DEPTH_BUCKETS - 1; b >= 0; b--) {
     const bucket = depthBuckets[b];
 
     for (const idx of bucket) {
-      if (shown >= CONFIG.MAX_TEXTS_PER_FRAME) return;
-
       const p = points[idx];
       const s = projectToScreen(p.x, p.y, p.depth);
       if (!isOnScreen(s.x, s.y, 160)) continue;
@@ -353,42 +342,131 @@ function renderTexts() {
       const hit = intersectionCount(p.targets, selectedTargets);
       const isSelected = selectedTargets.length > 0 && hit > 0;
 
-      const thresh = CONFIG.TEXT_NEAR_FACTOR_MIN -
-        (isSelected ? CONFIG.TEXT_SELECTED_BONUS : 0.0);
+      const baseThresh = CONFIG.TEXT_NEAR_FACTOR_MIN;
+      const thresh =
+        baseThresh - (isSelected ? CONFIG.TEXT_SELECTED_BONUS : 0.0);
       if (nearFactor < thresh) continue;
+
+      candidates.push({ p, s, nearFactor, isSelected });
+    }
+  }
+
+  // 선택된 타겟 + 더 가까운 애들을 우선
+  candidates.sort((a, b) => {
+    if (a.isSelected !== b.isSelected) return a.isSelected ? -1 : 1;
+    return b.nearFactor - a.nearFactor;
+  });
+
+  // 줌에 따라 한 프레임에 허용하는 텍스트 개수 보간
+  const maxZoomForCount = CONFIG.FULLTEXT_ZOOM_START;
+  const tZoom = constrain(
+    (zoom - CONFIG.TEXT_ZOOM_MIN) /
+    (maxZoomForCount - CONFIG.TEXT_ZOOM_MIN),
+    0,
+    1
+  );
+  const maxTexts = Math.round(
+    lerp(CONFIG.MAX_TEXTS_MAX, CONFIG.MAX_TEXTS_MIN, tZoom)
+  );
+
+  let shown = 0;
+
+  // ========================
+  // A. 풀 문장 모드 (진짜 끝까지 줌했을 때만)
+  // ========================
+  if (zoom >= CONFIG.FULLTEXT_ZOOM_END) {
+    const maxFull = Math.min(CONFIG.MAX_FULL_TEXTS, maxTexts);
+
+    for (let i = 0; i < candidates.length && shown < maxFull; i++) {
+      const { p, s, nearFactor, isSelected } = candidates[i];
 
       if (!canPlaceText(s.x, s.y)) continue;
 
-      let snippetLen;
-      if (nearFactor > 0.78 && zoom > 1.55) snippetLen = CONFIG.NEAR_SNIP;
-      else if (nearFactor > 0.55 && zoom > 1.15) snippetLen = CONFIG.MID_SNIP;
-      else snippetLen = CONFIG.FAR_SNIP;
+      // 풀 문장 (… 없이 전부)
+      let snippet = (p.text || "").replace(/\s+/g, " ").trim();
+      const limit = snippet.length;
 
-      const { snippet, limit } = makeSnippetWithLimit(p.text, snippetLen);
+      // 더 부드럽게, 살짝 톤 다운 + 거리 따라 투명
+      let size =
+        lerp(16, 26, nearFactor) *
+        (0.9 + 0.35 * (zoom - CONFIG.ZOOM_FULLTEXT_ONLY));
 
-      const size = lerp(10, 18, nearFactor) *
-        Math.min(1.25, zoom / 1.4);
-      const baseAlpha = lerp(90, 255, nearFactor);
-      const alpha = isSelected ? Math.min(255, baseAlpha * 1.35) : baseAlpha;
+      // nearFactor^0.9 로, 멀리 있는 애는 더 빨리 옅어지게
+      const fall = Math.pow(nearFactor, 0.9);
+      const baseAlpha = lerp(90, 230, fall);
+      const alpha = isSelected ? Math.min(255, baseAlpha * 1.15) : baseAlpha;
 
       textSize(size);
 
       if (isSelected) {
-        const spans = getSelectedSpansClipped(p.spansByTarget, p.targets, limit);
+        const spans = getSelectedSpansClipped(
+          p.spansByTarget,
+          p.targets,
+          limit
+        );
         drawSingleLineColored(snippet, spans, s.x, s.y, alpha);
       } else {
-        fill(255, alpha);
+        // 완전 흰색 대신 살짝 톤 다운된 밝은 회색
+        fill(230, 232, 240, alpha);
         noStroke();
         text(snippet, s.x, s.y);
       }
 
       shown++;
     }
+    return;
+  }
+
+  // ========================
+  // B. 일반 모드: 요약 텍스트 (… 유지)
+  // ========================
+  for (let i = 0; i < candidates.length && shown < maxTexts; i++) {
+    const { p, s, nearFactor, isSelected } = candidates[i];
+
+    if (!canPlaceText(s.x, s.y)) continue;
+
+    // 긴 스니펫은 "진짜 많이 가까워지고, 꽤 많이 줌한" 상태에서만
+    let snippetLen;
+    if (nearFactor > 0.86 && zoom > 3.0) {
+      snippetLen = CONFIG.NEAR_SNIP;      // 최대 80자
+    } else if (nearFactor > 0.65 && zoom > 2.0) {
+      snippetLen = CONFIG.MID_SNIP;       // 28자
+    } else {
+      snippetLen = CONFIG.FAR_SNIP;       // 14자
+    }
+
+    const { snippet, limit } = makeSnippetWithLimit(p.text, snippetLen);
+
+    // 멀수록 더 작고 더 투명
+    let size =
+      lerp(10, 18, nearFactor) * Math.min(1.15, zoom / 1.35);
+
+    // nearFactor^1.1 로 멀리 있는 놈들 빨리 죽이기
+    const fall = Math.pow(nearFactor, 1.1);
+    const baseAlpha = lerp(30, 210, fall);
+    const alpha = isSelected ? Math.min(255, baseAlpha * 1.25) : baseAlpha;
+
+    textSize(size);
+
+    if (isSelected) {
+      const spans = getSelectedSpansClipped(
+        p.spansByTarget,
+        p.targets,
+        limit
+      );
+      drawSingleLineColored(snippet, spans, s.x, s.y, alpha);
+    } else {
+      fill(230, 232, 240, alpha); // 살짝 톤 다운
+      noStroke();
+      text(snippet, s.x, s.y);
+    }
+    shown++;
   }
 }
 
+
 // =======================
-// Point placement
+// Point placement (severity axis)
 // =======================
 function makePoint(it, j) {
   const v = hashTo2D(it.text);
@@ -401,7 +479,11 @@ function makePoint(it, j) {
   borderish = constrain(borderish, 0.06, 0.86);
 
   const toward = v.x > 0 ? +1 : -1;
-  const neigh = constrain(li + toward, 0, CONFIG.LABEL_ORDER.length - 1);
+  const neigh = constrain(
+    li + toward,
+    0,
+    CONFIG.LABEL_ORDER.length - 1
+  );
 
   const c0 = CONFIG.LABEL_CENTERS[li];
   const c1 = CONFIG.LABEL_CENTERS[neigh];
@@ -413,14 +495,20 @@ function makePoint(it, j) {
 
   const spread =
     (1.0 - CONFIG.CLUSTER_TIGHTNESS) +
-    0.10 * (2 - Math.abs(li - 1.5));
+    0.1 * (2 - Math.abs(li - 1.5));
 
-  const wx = (cx + v.x * spread * 0.70) * CONFIG.BASE_SCALE +
+  const wx =
+    (cx + v.x * spread * 0.7) * CONFIG.BASE_SCALE +
     randFromSeed(j * 17 + 1) * 18;
-  const wy = (cy + v.y * spread * 1.15) * CONFIG.BASE_SCALE +
+  const wy =
+    (cy + v.y * spread * 1.15) * CONFIG.BASE_SCALE +
     randFromSeed(j * 17 + 2) * 18;
 
-  const depth = constrain(0.15 + 0.85 * v.d - 0.06 * li, 0, 1);
+  const depth = constrain(
+    0.15 + 0.85 * v.d - 0.06 * li,
+    0,
+    1
+  );
 
   return {
     text: it.text,
@@ -428,8 +516,13 @@ function makePoint(it, j) {
     li,
     targets: it.targets,
     spansByTarget: it.spansByTarget,
-    wx, wy, depth,
-    x: wx, y: wy, tx: wx, ty: wy
+    wx,
+    wy,
+    depth,
+    x: wx,
+    y: wy,
+    tx: wx,
+    ty: wy
   };
 }
 
@@ -440,38 +533,46 @@ function projectToScreen(wx, wy, depth01) {
   const z = Math.max(0.35, zoom);
   const persp = lerp(1.22, 0.26, depth01) * z;
 
-  const cy = Math.cos(camYaw), sy = Math.sin(camYaw);
-  const cp = Math.cos(camPitch), sp = Math.sin(camPitch);
+  const cy = Math.cos(camYaw),
+    sy = Math.sin(camYaw);
+  const cp = Math.cos(camPitch);
 
-  // yaw
-  let x = wx * cy - wy * sy;
-  let y = wx * sy + wy * cy;
+  // viewShiftX만큼 화면 중심을 왼/오로 슬라이드
+  const wxShifted = wx - viewShiftX;
 
-  // pitch (fake Z)
-  let y2 = y * cp;
+  let x = wxShifted * cy - wy * sy;
+  let y = wxShifted * sy + wy * cy;
+
+  let y2 = y * cp; // fake 3D
 
   return {
     x: width / 2 + x * persp,
-    y: height / 2 + y2 * persp
+    y: height / 2 + y2 * persp,
   };
 }
 
+
 // =======================
-// Depth buckets
+// Buckets
 // =======================
 function buildDepthBuckets() {
-  depthBuckets = Array.from({ length: CONFIG.DEPTH_BUCKETS }, () => []);
+  depthBuckets = Array.from(
+    { length: CONFIG.DEPTH_BUCKETS },
+    () => []
+  );
   for (let i = 0; i < points.length; i++) {
     const d = points[i].depth;
-    const bi = Math.max(0, Math.min(
-      CONFIG.DEPTH_BUCKETS - 1,
-      Math.floor(d * CONFIG.DEPTH_BUCKETS)
-    ));
+    const bi = Math.max(
+      0,
+      Math.min(
+        CONFIG.DEPTH_BUCKETS - 1,
+        Math.floor(d * CONFIG.DEPTH_BUCKETS)
+      )
+    );
     depthBuckets[bi].push(i);
   }
-  for (let b = 0; b < CONFIG.DEPTH_BUCKETS; b++) {
+  for (let b = 0; b < CONFIG.DEPTH_BUCKETS; b++)
     shuffleInPlace(depthBuckets[b]);
-  }
 }
 
 // =======================
@@ -495,38 +596,32 @@ function makeStars() {
 }
 
 // =======================
-// Colors (severity gradient)
-// =======================
-// =======================
-// Colors (very soft red -> strong red)
+// Severity color (연한 빨강 ↔ 빨강)
 // =======================
 function severityColor(li, nearFactor, selected) {
-  // li: 0 = normal, 1 = offensive, 2 = L1_hate, 3 = L2_hate
-  const base = [
-    { r: 110, g: 80, b: 80 },  // normal  : 아주 약한 붉은 톤
-    { r: 140, g: 70, b: 70 },  // offensive: 조금 더 붉게
-    { r: 185, g: 65, b: 65 },  // L1_hate : 꽤 붉은
-    { r: 230, g: 55, b: 55 }   // L2_hate : 강한 빨강
-  ][constrain(li, 0, 3)];
+  const bases = [
+    { r: 120, g: 80, b: 90 },  // normal
+    { r: 150, g: 70, b: 90 },  // offensive
+    { r: 190, g: 60, b: 90 },  // L1
+    { r: 230, g: 50, b: 80 }   // L2
+  ];
+  const base = bases[constrain(li, 0, 3)];
 
-  // 가까울수록 살짝만 더 밝게 (화이트 섞기)
-  const wBase = lerp(0.02, 0.12, nearFactor);
-  const w = wBase + (selected ? 0.05 : 0); // 선택된 점이면 아주 조금 더 강조
+  const w = lerp(0.0, 0.25, nearFactor) + (selected ? 0.08 : 0.0);
 
   return {
     r: Math.round(lerp(base.r, 255, w)),
-    g: Math.round(lerp(base.g, 255, w)),
-    b: Math.round(lerp(base.b, 255, w))
+    g: Math.round(lerp(base.g, 180, w * 0.6)),
+    b: Math.round(lerp(base.b, 140, w * 0.4))
   };
 }
 
-
 // =======================
-// Text helpers
+// Text coloring
 // =======================
 function drawSingleLineColored(txt, spans, x, y, alphaText) {
   if (!spans.length) {
-    fill(255, alphaText);
+    fill(230, 232, 240, alphaText);  // 약간 회색 톤
     noStroke();
     text(txt, x, y);
     return;
@@ -546,7 +641,9 @@ function drawSingleLineColored(txt, spans, x, y, alphaText) {
     if (b <= a) continue;
 
     const seg = txt.slice(a, b);
-    const hits = spans.filter(sp => sp.s < b && sp.e > a).map(sp => sp.t);
+    const hits = spans
+      .filter((sp) => sp.s < b && sp.e > a)
+      .map((sp) => sp.t);
 
     let col = "#ffffff";
     if (hits.length >= 1) col = TARGET_COLORS[hits[0]] || "#ffffff";
@@ -563,7 +660,7 @@ function getSelectedSpansClipped(spansByTarget, targetSet, limit) {
   if (!selectedTargets.length) return [];
 
   const validSelected = selectedTargets.filter(
-    t => targetSet && targetSet.has(t)
+    (t) => targetSet && targetSet.has(t)
   );
   if (!validSelected.length) return [];
 
@@ -585,19 +682,19 @@ function getSelectedSpansClipped(spansByTarget, targetSet, limit) {
   }
 
   spans = spans
-    .map(o => ({
+    .map((o) => ({
       ...o,
       s: Math.max(0, Math.min(limit, o.s)),
       e: Math.max(0, Math.min(limit, o.e))
     }))
-    .filter(o => o.e > o.s);
+    .filter((o) => o.e > o.s);
 
   spans.sort((a, b) => a.s - b.s || a.e - b.e);
   return spans;
 }
 
 // =======================
-// Target rationale parsing
+// Target rationale parsing (원래 로직 유지)
 // =======================
 function parseTargetRationale(raw) {
   const m = new Map();
@@ -605,8 +702,10 @@ function parseTargetRationale(raw) {
 
   const trimmed = raw.trim();
 
-  if ((trimmed.startsWith("{") && trimmed.endsWith("}")) ||
-    (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
+  if (
+    (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+    (trimmed.startsWith("[") && trimmed.endsWith("]"))
+  ) {
     try {
       const j = JSON.parse(trimmed.replaceAll("'", '"'));
       const pairs = extractPairsFromAny(j);
@@ -641,7 +740,10 @@ function parseTargetRationale(raw) {
   for (const [k, arr] of m.entries()) {
     const cleaned = arr
       .map(([s, e]) => [Number(s), Number(e)])
-      .filter(([s, e]) => Number.isFinite(s) && Number.isFinite(e) && e > s)
+      .filter(
+        ([s, e]) =>
+          Number.isFinite(s) && Number.isFinite(e) && e > s
+      )
       .sort((a, b) => a[0] - b[0] || a[1] - b[1]);
     m.set(k, cleaned);
   }
@@ -653,27 +755,26 @@ function extractPairsFromText(s) {
   const out = [];
   const re = /(\d+)\s*,\s*(\d+)/g;
   let m;
-  while ((m = re.exec(s || "")) !== null) {
+  while ((m = re.exec(s || "")) !== null)
     out.push([parseInt(m[1], 10), parseInt(m[2], 10)]);
-  }
   return out;
 }
+
 function extractPairsFromAny(obj) {
   const out = [];
   const stack = [obj];
   while (stack.length) {
     const cur = stack.pop();
     if (cur == null) continue;
-    if (Array.isArray(cur)) {
-      for (const v of cur) stack.push(v);
-    } else if (typeof cur === "object") {
+    if (Array.isArray(cur)) for (const v of cur) stack.push(v);
+    else if (typeof cur === "object")
       for (const k of Object.keys(cur)) stack.push(cur[k]);
-    } else if (typeof cur === "string") {
+    else if (typeof cur === "string")
       out.push(...extractPairsFromText(cur));
-    }
   }
   return out;
 }
+
 function normalizeTargetName(s) {
   const t = (s || "").toLowerCase();
   if (t.includes("age")) return "Age";
@@ -687,10 +788,11 @@ function normalizeTargetName(s) {
   if (t.includes("relig")) return "Religion";
   return s;
 }
+
 function countAllSpans(map) {
   if (!map) return 0;
   let c = 0;
-  for (const arr of map.values()) c += (arr?.length || 0);
+  for (const arr of map.values()) c += arr?.length || 0;
   return c;
 }
 
@@ -702,18 +804,22 @@ function normalizeTargets(raw) {
   const set = new Set();
   if (s.includes("age")) set.add("Age");
   if (s.includes("disab")) set.add("Disabled");
-  if (s.includes("gender") || s.includes("female") || s.includes("male")) set.add("Gender");
-  if (s.includes("individual") || s.includes("person")) set.add("Individual");
-  if (s.includes("job") || s.includes("occupation")) set.add("Job");
+  if (s.includes("gender") || s.includes("female") || s.includes("male"))
+    set.add("Gender");
+  if (s.includes("individual") || s.includes("person"))
+    set.add("Individual");
+  if (s.includes("job") || s.includes("occupation"))
+    set.add("Job");
   if (s.includes("other") || s.includes("oth")) set.add("Others");
   if (s.includes("politic")) set.add("Politics");
-  if (s.includes("region") || s.includes("country") || s.includes("nation")) set.add("Region");
+  if (s.includes("region") || s.includes("country") || s.includes("nation"))
+    set.add("Region");
   if (s.includes("relig")) set.add("Religion");
   return set;
 }
 
 // =======================
-// Misc helpers
+// Utils
 // =======================
 function makeSnippetWithLimit(t, maxLen) {
   let s = (t || "").replace(/\s+/g, " ").trim();
@@ -733,11 +839,13 @@ function sampleArray(arr, n) {
   }
   return out;
 }
+
 function randFromSeed(seed) {
   let x = seed >>> 0;
   x = (1664525 * x + 1013904223) >>> 0;
   return (x % 100000) / 100000 - 0.5;
 }
+
 function hashTo2D(text) {
   let a = 0, b = 0, c = 0;
   for (let i = 0; i < text.length; i++) {
@@ -754,22 +862,29 @@ function hashTo2D(text) {
   let y = y01 * 2 - 1;
 
   const r = Math.sqrt(x * x + y * y) + 1e-6;
-  const k = 0.70 + 0.30 / (1 + 2.6 * r);
+  const k = 0.7 + 0.3 / (1 + 2.6 * r);
   x *= k;
   y *= k;
 
   return { x, y, d: d01 };
 }
+
 function shuffleInPlace(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
 }
+
 function isOnScreen(x, y, margin = 200) {
-  return x >= -margin && x <= width + margin &&
-    y >= -margin && y <= height + margin;
+  return (
+    x >= -margin &&
+    x <= width + margin &&
+    y >= -margin &&
+    y <= height + margin
+  );
 }
+
 function hexToRgb(hex) {
   const h = hex.replace("#", "");
   return {
@@ -816,27 +931,13 @@ function avgAnchorsForPoint(targetSet, sel, anchors) {
 }
 
 // =======================
-// selection change hook
-// =======================
-function onSelectionChanged() {
-  if (selectedTargets.length > 0) {
-    // 새 필터 적용될 때마다 0→1로 다시 모핑
-    filterAnim = 0;
-    filterAnimTarget = 1;
-  } else {
-    // 필터 다 풀면 천천히 원래 상태로
-    filterAnimTarget = 0;
-  }
-}
-
-// =======================
 // UI
 // =======================
 function initChips() {
   if (!chipsEl) return;
   chipsEl.innerHTML = "";
 
-  for (const t of CHIP_TARGETS) {
+  for (const t of TARGETS) {
     const chip = document.createElement("div");
     chip.className = "chip";
     chip.dataset.on = "0";
@@ -857,11 +958,10 @@ function initChips() {
         selectedTargets.splice(idx, 1);
         chip.dataset.on = "0";
       } else {
-        if (selectedTargets.length >= 3) return;
+        // ★ 더 이상 개수 제한 없음
         selectedTargets.push(t);
         chip.dataset.on = "1";
       }
-      onSelectionChanged();   // ★ 선택 변경 시 모핑 트리거
     });
 
     chipsEl.appendChild(chip);
@@ -876,8 +976,13 @@ function setStatus(msg) {
 // Interaction
 // =======================
 function mouseWheel(event) {
-  const factor = event.delta > 0 ? 1 / CONFIG.ZOOM_FACTOR : CONFIG.ZOOM_FACTOR;
-  targetZoom = constrain(targetZoom * factor, CONFIG.ZOOM_MIN, CONFIG.ZOOM_MAX);
+  const factor =
+    event.delta > 0 ? 1 / CONFIG.ZOOM_FACTOR : CONFIG.ZOOM_FACTOR;
+  targetZoom = constrain(
+    targetZoom * factor,
+    CONFIG.ZOOM_MIN,
+    CONFIG.ZOOM_MAX
+  );
   return false;
 }
 
@@ -886,25 +991,41 @@ function mousePressed() {
   lastX = mouseX;
   lastY = mouseY;
 }
+
 function mouseReleased() {
   dragging = false;
 }
+
 function mouseDragged() {
   if (!dragging) return;
 
   const dx = mouseX - lastX;
   const dy = mouseY - lastY;
 
-  targetYaw += dx * CONFIG.YAW_SENSITIVITY;
-  targetPitch = constrain(
-    targetPitch + dy * CONFIG.PITCH_SENSITIVITY,
-    CONFIG.PITCH_MIN,
-    CONFIG.PITCH_MAX
-  );
+  if (keyIsDown(SHIFT)) {
+    // --- Shift + 드래그: view를 옆으로 밀기 (pan) ---
+    // dx > 0 (오른쪽으로 드래그) → viewShiftX 증가 → 화면은 왼쪽 클러스터로 이동
+    viewShiftX = constrain(
+      viewShiftX - dx * CONFIG.PAN_SENSITIVITY,
+      -CONFIG.VIEW_SHIFT_MAX,
+      CONFIG.VIEW_SHIFT_MAX
+    );
+
+    // 패닝 모드에서는 pitch는 안 건드리는 편이 깔끔해서 dy는 무시
+  } else {
+    // --- 기본: 회전 모드 ---
+    targetYaw += dx * CONFIG.YAW_SENSITIVITY;
+    targetPitch = constrain(
+      targetPitch + dy * CONFIG.PITCH_SENSITIVITY,
+      CONFIG.PITCH_MIN,
+      CONFIG.PITCH_MAX
+    );
+  }
 
   lastX = mouseX;
   lastY = mouseY;
 }
+
 
 // Touch support
 function touchStarted() {
@@ -915,6 +1036,7 @@ function touchStarted() {
   }
   return false;
 }
+
 function touchMoved() {
   if (touches.length === 1 && dragging) {
     const dx = touches[0].x - lastX;
@@ -932,6 +1054,7 @@ function touchMoved() {
   }
   return false;
 }
+
 function touchEnded() {
   dragging = false;
   return false;
@@ -939,5 +1062,21 @@ function touchEnded() {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+  if (starsG) starsG.remove();
   makeStars();
+}
+
+function keyPressed() {
+  const step = 250;  // 한 번에 얼마나 옮길지 (필요하면 조정)
+
+  if (key === 'a' || key === 'A') {
+    // 왼쪽으로 이동: L2_hate 쪽을 화면 중앙으로
+    viewShiftX -= step;
+  } else if (key === 'd' || key === 'D') {
+    // 오른쪽으로 이동: normal 쪽을 화면 중앙으로
+    viewShiftX += step;
+  } else if (key === '0') {
+    // 초기 위치로 리셋
+    viewShiftX = 0;
+  }
 }
