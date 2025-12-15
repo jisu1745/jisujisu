@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>L2_Hate</title>
+    <title>offensive</title>
     <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
     <style>
         * {
@@ -179,7 +179,7 @@
             position: relative;
         }
 
-        /* Text Window with Webcam */
+        /* Text Window */
         .text-window {
             grid-column: 1 / 5;
             grid-row: 1 / 4;
@@ -210,6 +210,20 @@
         .window-dot:nth-child(2) { background: #ffbd2e; }
         .window-dot:nth-child(3) { background: #27c93f; }
 
+        .text-window h1 {
+            font-family: 'Libre Baskerville', serif;
+            font-size: 18px;
+            line-height: 1.6;
+            font-weight: 400;
+            margin-bottom: 20px;
+        }
+
+        .text-window p {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #4a4a4a;
+        }
+
         .webcam-container {
             width: 100%;
             height: 100%;
@@ -226,50 +240,30 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            filter: blur(3px) contrast(1.2) saturate(1.3);
-            animation: glitchStrong 0.3s infinite;
+            filter: blur(1.5px) contrast(1.1) saturate(1.15);
+            animation: glitchWeak 0.5s infinite;
         }
 
-        @keyframes glitchStrong {
+        @keyframes glitchWeak {
             0%, 100% {
-                transform: translate(0, 0) scale(1);
-                filter: blur(3px) contrast(1.2) saturate(1.3);
-            }
-            10% {
-                transform: translate(-3px, 2px) scale(1.02);
-                filter: blur(4px) contrast(1.5) saturate(1.1) hue-rotate(5deg);
+                transform: translate(0, 0);
+                filter: blur(1.5px) contrast(1.1) saturate(1.15);
             }
             20% {
-                transform: translate(2px, -2px) scale(0.98);
-                filter: blur(2px) contrast(1.3) saturate(1.5) hue-rotate(-5deg);
-            }
-            30% {
-                transform: translate(-2px, -3px) scale(1.01);
-                filter: blur(5px) contrast(1.4) saturate(1.2);
+                transform: translate(-1px, 1px);
+                filter: blur(2px) contrast(1.15) saturate(1.1) hue-rotate(2deg);
             }
             40% {
-                transform: translate(3px, 1px) scale(0.99);
-                filter: blur(3px) contrast(1.6) saturate(1.4) hue-rotate(3deg);
-            }
-            50% {
-                transform: translate(-1px, 3px) scale(1.02);
-                filter: blur(4px) contrast(1.2) saturate(1.1);
+                transform: translate(1px, -1px);
+                filter: blur(1px) contrast(1.12) saturate(1.2);
             }
             60% {
-                transform: translate(2px, -1px) scale(0.98);
-                filter: blur(2px) contrast(1.5) saturate(1.5) hue-rotate(-3deg);
-            }
-            70% {
-                transform: translate(-3px, 2px) scale(1.01);
-                filter: blur(5px) contrast(1.3) saturate(1.2);
+                transform: translate(-1px, 0px);
+                filter: blur(2px) contrast(1.1) saturate(1.15) hue-rotate(-2deg);
             }
             80% {
-                transform: translate(1px, -2px) scale(0.99);
-                filter: blur(3px) contrast(1.4) saturate(1.4) hue-rotate(4deg);
-            }
-            90% {
-                transform: translate(-2px, 1px) scale(1.02);
-                filter: blur(4px) contrast(1.2) saturate(1.3);
+                transform: translate(1px, 0px);
+                filter: blur(1.5px) contrast(1.13) saturate(1.18);
             }
         }
 
@@ -283,18 +277,18 @@
                 repeating-linear-gradient(
                     0deg,
                     transparent,
-                    transparent 2px,
-                    rgba(255, 0, 0, 0.05) 2px,
-                    rgba(255, 0, 0, 0.05) 4px
+                    transparent 3px,
+                    rgba(255, 255, 255, 0.02) 3px,
+                    rgba(255, 255, 255, 0.02) 6px
                 );
             pointer-events: none;
-            animation: scanlines 0.5s linear infinite;
+            animation: scanlines 0.8s linear infinite;
             mix-blend-mode: overlay;
         }
 
         @keyframes scanlines {
             0% { transform: translateY(0); }
-            100% { transform: translateY(4px); }
+            100% { transform: translateY(6px); }
         }
 
         /* Video Container */
@@ -307,13 +301,6 @@
             box-shadow: 0 8px 30px rgba(0,0,0,0.15);
             opacity: 0;
             animation: appear 0s ease-out 1s forwards;
-            border: 1px solid white;
-        }
-
-        .youtube-embed {
-            width: 100%;
-            height: 100%;
-            border: none;
         }
 
         .video-player {
@@ -327,29 +314,8 @@
             display: none;
         }
 
-        /* Bottom Video Containers */
-        .bottom-video-1 {
-            grid-column: 2 / 7;
-            grid-row: 7 / 10;
-            background: #000;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-            opacity: 0;
-            animation: appear 0s ease-out 5s forwards;
-            border: 1px solid white;
-        }
-
-        .bottom-video-2 {
-            grid-column: 7 / 12;
-            grid-row: 7 / 10;
-            background: #000;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-            opacity: 0;
-            animation: appear 0s ease-out 5.5s forwards;
-            border: 1px solid white;
+        .play-button {
+            display: none;
         }
 
         /* Clock Widget - 썸네일로 변경 */
@@ -413,7 +379,6 @@
             animation: appear 0s ease-out 3s forwards;
             cursor: pointer;
             transition: transform 0.3s ease;
-            border: 1px solid white;
         }
 
         .photo-item-1:hover {
@@ -434,6 +399,17 @@
             opacity: 0.9;
         }
 
+        .photo-item-1 img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .photo-item-1:hover img {
+            transform: scale(1.05);
+        }
+
         .photo-item-2 {
             grid-column: 5 / 8;
             grid-row: 5 / 8;
@@ -443,7 +419,17 @@
             opacity: 0;
             animation: appear 0s ease-out 0s forwards;
             display: none;
-            border: 1px solid white;
+        }
+
+        .photo-item-2 img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .photo-item-2:hover img {
+            transform: scale(1.05);
         }
 
         .photo-item-3 {
@@ -456,7 +442,6 @@
             animation: appear 0s ease-out 4s forwards;
             cursor: pointer;
             transition: transform 0.3s ease;
-            border: 1px solid white;
         }
 
         .photo-item-3:hover {
@@ -467,7 +452,7 @@
             width: 100%;
             height: 100%;
             display: block;
-            background-image: url('khaters-thumbnail.png');
+            background-image: url('khaters-sentence-offensive.png');
             background-size: cover;
             background-position: center;
             position: relative;
@@ -511,15 +496,50 @@
             pointer-events: none;
         }
 
+        .photo-item-1 img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .photo-item-1:hover img {
+            transform: scale(1.05);
+        }
+
+        .photo-item-2 img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .photo-item-2:hover img {
+            transform: scale(1.05);
+        }
+
         /* Placeholder Images */
         .placeholder {
             width: 100%;
             height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-size: 14px;
+        }
+
+        .placeholder-navy {
+            background: var(--accent-navy);
+        }
+
+        .placeholder-beige {
+            background: linear-gradient(135deg, #d4a574 0%, #c9977e 100%);
+        }
+
+        .placeholder-ocean {
+            background: linear-gradient(135deg, #667eea 0%, #5a9fd4 100%);
         }
 
         .placeholder-group {
@@ -537,19 +557,63 @@
         }
 
         /* Responsive */
+        @media (max-width: 1024px) {
+            .grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
+
+            .text-window {
+                grid-column: 1 / 4;
+            }
+
+            .video-container {
+                grid-column: 4 / 7;
+                grid-row: 2 / 4;
+            }
+
+            .clock-widget {
+                grid-column: 1 / 3;
+                grid-row: 4 / 6;
+            }
+
+            .photo-item-1 {
+                grid-column: 3 / 6;
+                grid-row: 4 / 6;
+            }
+
+            .photo-item-2 {
+                grid-column: 1 / 4;
+                grid-row: 6 / 8;
+            }
+
+            .photo-item-3 {
+                grid-column: 4 / 7;
+                grid-row: 6 / 8;
+            }
+        }
+
         @media (max-width: 768px) {
+            nav {
+                padding: 15px 20px;
+            }
+
+            .container {
+                padding: 40px 20px;
+            }
+
             .grid {
                 grid-template-columns: 1fr;
+                gap: 15px;
             }
+
             .text-window,
             .video-container,
             .clock-widget,
             .photo-item-1,
             .photo-item-2,
-            .photo-item-3,
-            .bottom-video-1,
-            .bottom-video-2 {
+            .photo-item-3 {
                 grid-column: 1;
+                grid-row: auto;
             }
         }
     </style>
@@ -558,43 +622,18 @@
     <!-- Animated Background with Video -->
     <div class="animated-background">
         <video class="video-background" autoplay loop muted playsinline preload="auto">
-            <source src="l2-background.mp4" type="video/mp4">
+            <source src="offensive-background.mp4" type="video/mp4">
+            <source src="./offensive-background.mp4" type="video/mp4">
+            Your browser does not support the video tag.
         </video>
         <div class="dithering-overlay"></div>
         <div class="noise-overlay"></div>
         <div class="gradient-layer"></div>
     </div>
 
-    <!-- L2_Hate Header and Banner -->
-    <div style="max-width: 1400px; margin: 0 auto 20px; padding: 0 40px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid; border-image: linear-gradient(90deg, #ff0000, #ff0066, #8000ff, #0080ff) 1; padding-bottom: 20px; margin-bottom: 20px; background: linear-gradient(135deg, rgba(255, 0, 0, 0.05) 0%, rgba(128, 0, 255, 0.05) 50%, rgba(0, 128, 255, 0.05) 100%);">
-            <div style="display: flex; align-items: center; gap: 20px;">
-                <div style="font-family: 'Courier New', monospace; font-size: 36px; font-weight: bold; background: linear-gradient(135deg, #ff0000, #ff0066, #8000ff, #0080ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-shadow: 0 0 20px rgba(255, 0, 0, 0.5);">
-                    L2_Hate
-                </div>
-            </div>
-        </div>
-        
-        <!-- Banner Grid -->
-        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 20px;">
-            <img src="kartsdesign02_a_cyberpunk_man_wearing_a_futuristic_mask_and_neo_b529565f-90c5-486c-b44d-bc49de39e989.png" alt="HateCET - 가입코드 148" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-            <img src="kartsdesign02_a_masked_man_with_his_face_completely_hidden_game_fb5b0e48-d93f-4c96-911c-2b89a9415145 (1).png" alt="L2BET - 가입코드 222" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-            <img src="kartsdesign02_League_of_legend_Game_art_style_a_woman_wearing_a_51db86e7-5353-47c3-b655-9b0bd8d32eb1.png" alt="L2BET - 가입코드 552 (Panda)" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-            <img src="kartsdesign02_a_cyberpunk_man_wearing_a_futuristic_mask_and_neo_f2d18a47-e903-4c6e-b4a3-0bdd4cdcc29a (1).png" alt="Tabel/L2H - 코드 L2H" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-            <img src="kartsdesign02_League_of_legend_Game_art_style_a_Penguin_with_hi_bfb11e41-a1b2-41be-acb9-98f8f7a73f14.png" alt="L2BET - 가입코드 552 (Futuristic)" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-            <img src="kartsdesign02_League_of_legend_Game_art_style_a_woman_wearing_a_adfcedef-3407-44d5-b318-503a7869eea4.png" alt="L2BET - 가입코드 552" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-            <img src="kartsdesign02_a_cyberpunk_man_wearing_a_futuristic_mask_and_neo_b529565f-90c5-486c-b44d-bc49de39e989.png" alt="HateCET - 가입코드 148" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-            <img src="kartsdesign02_a_masked_man_with_his_face_completely_hidden_game_fb5b0e48-d93f-4c96-911c-2b89a9415145 (1).png" alt="L2BET - 가입코드 222" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-            <img src="kartsdesign02_League_of_legend_Game_art_style_a_woman_wearing_a_51db86e7-5353-47c3-b655-9b0bd8d32eb1.png" alt="L2BET - 가입코드 552 (Panda)" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-            <img src="kartsdesign02_a_cyberpunk_man_wearing_a_futuristic_mask_and_neo_f2d18a47-e903-4c6e-b4a3-0bdd4cdcc29a (1).png" alt="Tabel/L2H - 코드 L2H" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-            <img src="kartsdesign02_League_of_legend_Game_art_style_a_Penguin_with_hi_bfb11e41-a1b2-41be-acb9-98f8f7a73f14.png" alt="L2BET - 가입코드 552 (Futuristic)" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-            <img src="kartsdesign02_League_of_legend_Game_art_style_a_woman_wearing_a_adfcedef-3407-44d5-b318-503a7869eea4.png" alt="L2BET - 가입코드 552" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-        </div>
-    </div>
-
     <nav>
         <div class="nav-links">
-            <a href="https://youtu.be/YQ4LqP4mLYQ" target="_blank">Video</a>
+            <a href="https://youtu.be/EFJDyHQa4Mo" target="_blank">Video</a>
             <a href="https://gemini.google.com/share/79bdbdfc15e7" target="_blank">Storybook</a>
             <a href="https://jisu1745.github.io/jisujisu/new_dat_vis.html" target="_blank">Data Visualization</a>
             <a href="https://jisu1745.github.io/jisujisu/" target="_blank">Game</a>
@@ -603,7 +642,7 @@
 
     <div class="container">
         <div class="grid">
-            <!-- Webcam Window -->
+            <!-- Text Window with Webcam -->
             <div class="text-window">
                 <div class="window-header">
                     <div class="window-dot"></div>
@@ -616,15 +655,11 @@
                 </div>
             </div>
 
-            <!-- Video Container with Thumbnail -->
+            <!-- Video/Image Container -->
             <div class="video-container">
-                <iframe class="youtube-embed" 
-                    src="https://www.youtube.com/embed/2IAMk9rr1_Q" 
-                    title="YouTube video player" 
-                    frameborder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                    allowfullscreen>
-                </iframe>
+                <video id="playVideo" class="video-player" autoplay loop controls preload="auto">
+                    <source src="offensive-play-video.mp4" type="video/mp4">
+                </video>
             </div>
 
             <!-- Clock Widget - 썸네일 링크 -->
@@ -632,7 +667,7 @@
                 <a href="https://jisu1745.github.io/jisujisu/" target="_blank" class="jisujisu-link"></a>
             </div>
 
-            <!-- Photo Grid -->
+            <!-- Photo Grid Items -->
             <div class="photo-item-1">
                 <a href="https://gemini.google.com/share/79bdbdfc15e7" target="_blank" class="label-link"></a>
             </div>
@@ -646,64 +681,89 @@
                     <div class="noise-texture"></div>
                 </a>
             </div>
-
-            <!-- Bottom Video 1 -->
-            <div class="bottom-video-1">
-                <video class="video-player" controls preload="metadata">
-                    <source src="L2_hate_1.mp4" type="video/mp4">
-                </video>
-            </div>
-
-            <!-- Bottom Video 2 -->
-            <div class="bottom-video-2">
-                <video class="video-player" controls preload="metadata">
-                    <source src="L2_hate_2.mp4" type="video/mp4">
-                </video>
-            </div>
         </div>
     </div>
 
     <script>
         // Clock removed - replaced with thumbnail
 
-        // Background video
-        const bgVideo = document.querySelector('.video-background');
-        if (bgVideo) {
-            bgVideo.play().catch(e => console.log('BG video:', e));
+        // Video autoplay - 강화된 버전
+        const video = document.querySelector('.video-background');
+        if (video) {
+            console.log('Video element found');
+            
+            // 비디오 로드 이벤트
+            video.addEventListener('loadeddata', () => {
+                console.log('Video loaded successfully');
+            });
+            
+            video.addEventListener('error', (e) => {
+                console.error('Video error:', e);
+            });
+            
+            // 강제 재생
+            video.play().then(() => {
+                console.log('Video playing');
+            }).catch(err => {
+                console.error('Video autoplay failed:', err);
+                // 재시도
+                setTimeout(() => {
+                    video.play().catch(e => console.error('Retry failed:', e));
+                }, 1000);
+            });
+            
+            // 사용자 인터랙션 후 재생 시도
+            document.addEventListener('click', () => {
+                video.play().catch(e => console.log('Click play attempt:', e));
+            }, { once: true });
+        } else {
+            console.error('Video element not found');
         }
 
-        // Webcam
+        // Webcam access
         async function startWebcam() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' } 
+                    video: { 
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: 'user'
+                    } 
                 });
-                document.getElementById('webcam').srcObject = stream;
+                const webcam = document.getElementById('webcam');
+                if (webcam) {
+                    webcam.srcObject = stream;
+                }
             } catch (err) {
-                console.error('Webcam failed:', err);
-                document.querySelector('.webcam-container').innerHTML = 
-                    '<p style="color: white; padding: 20px; text-align: center;">카메라 접근 권한이 필요합니다</p>';
+                console.error('Webcam access failed:', err);
+                // 웹캠 접근 실패시 대체 메시지 표시
+                const webcamContainer = document.querySelector('.webcam-container');
+                if (webcamContainer) {
+                    webcamContainer.innerHTML = '<p style="color: white; padding: 20px; text-align: center;">카메라 접근 권한이 필요합니다</p>';
+                }
             }
         }
+
         startWebcam();
 
         // Play video - 자동재생
         const playVideo = document.getElementById('playVideo');
         
         if (playVideo) {
-            // 페이지 로드 시 자동 재생
             playVideo.play().catch(err => {
                 console.error('Autoplay failed:', err);
-                // 자동재생 실패 시 사용자 인터랙션 후 재생
                 document.addEventListener('click', () => {
                     playVideo.play().catch(e => console.log('Click play:', e));
                 }, { once: true });
             });
-
-            playVideo.addEventListener('loadeddata', () => {
-                console.log('Video loaded and ready');
-            });
         }
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+            });
+        });
     </script>
 </body>
 </html>

@@ -16,11 +16,115 @@
         }
 
         body {
-            background: #000 url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23000"/><circle cx="50" cy="50" r="1" fill="%23ff0000"/></svg>');
+            background: #000;
             color: #fff;
             font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
             font-weight: 500;
             overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated Background with Video */
+        .animated-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            background: #000000;
+        }
+
+        .video-background {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+            filter: blur(8px);
+            z-index: 1;
+        }
+
+        .dithering-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 1px,
+                    rgba(0, 0, 0, 0.7) 1px,
+                    rgba(0, 0, 0, 0.7) 2px
+                ),
+                repeating-linear-gradient(
+                    90deg,
+                    transparent,
+                    transparent 1px,
+                    rgba(0, 0, 0, 0.7) 1px,
+                    rgba(0, 0, 0, 0.7) 2px
+                );
+            opacity: 0.8;
+            mix-blend-mode: multiply;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .noise-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                repeating-conic-gradient(from 0deg, 
+                    #000 0deg 2deg, 
+                    transparent 2deg 4deg),
+                repeating-radial-gradient(
+                    circle at 50% 50%,
+                    rgba(255, 255, 255, 0.1) 0px,
+                    transparent 1px,
+                    rgba(0, 0, 0, 0.1) 2px
+                );
+            background-size: 4px 4px, 3px 3px;
+            opacity: 0.6;
+            mix-blend-mode: overlay;
+            pointer-events: none;
+            animation: grain 0.2s steps(4) infinite;
+            z-index: 3;
+        }
+
+        @keyframes grain {
+            0%, 100% { transform: translate(0, 0); }
+            10% { transform: translate(-5%, -5%); }
+            20% { transform: translate(-10%, 5%); }
+            30% { transform: translate(5%, -10%); }
+            40% { transform: translate(-5%, 15%); }
+            50% { transform: translate(-10%, 5%); }
+            60% { transform: translate(15%, 0%); }
+            70% { transform: translate(0%, 15%); }
+            80% { transform: translate(-15%, 10%); }
+            90% { transform: translate(10%, -5%); }
+        }
+
+        .gradient-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                180deg,
+                rgba(0, 0, 0, 0) 0%,
+                rgba(0, 0, 0, 0.3) 100%
+            );
         }
 
         .container {
@@ -855,6 +959,16 @@
 </head>
 
 <body>
+    <!-- Animated Background with Video -->
+    <div class="animated-background">
+        <video class="video-background" autoplay loop muted playsinline preload="auto">
+            <source src="index-background.mp4" type="video/mp4">
+        </video>
+        <div class="dithering-overlay"></div>
+        <div class="noise-overlay"></div>
+        <div class="gradient-layer"></div>
+    </div>
+
     <div class="container">
         <div class="logo">
             <h1>K-Haters: Expressive powers of online K-hate speeches</h1>
@@ -980,18 +1094,24 @@
             <p>당신의 댓글 수준에 따라 아래와 같이 분류됩니다.</p>
         </div>
         <div class="vampire-image">
-            <div class="vampire-box">
-                <div class="vampire-placeholder"></div>
-                <div class="vampire-label">Normal</div>
-            </div>
-            <div class="vampire-box">
-                <div class="vampire-placeholder"></div>
-                <div class="vampire-label">Offensive</div>
-            </div>
-            <div class="vampire-box">
-                <div class="vampire-placeholder"></div>
-                <div class="vampire-label">L1_Hate</div>
-            </div>
+            <a href="Normal.html" style="text-decoration:none;">
+                <div class="vampire-box" style="cursor:pointer;">
+                    <div class="vampire-placeholder"></div>
+                    <div class="vampire-label">Normal</div>
+                </div>
+            </a>
+            <a href="offensive.html" style="text-decoration:none;">
+                <div class="vampire-box" style="cursor:pointer;">
+                    <div class="vampire-placeholder"></div>
+                    <div class="vampire-label">Offensive</div>
+                </div>
+            </a>
+            <a href="L1_hate.html" style="text-decoration:none;">
+                <div class="vampire-box" style="cursor:pointer;">
+                    <div class="vampire-placeholder"></div>
+                    <div class="vampire-label">L1_Hate</div>
+                </div>
+            </a>
             <a href="L2_hate.html" style="text-decoration:none;">
                 <div class="vampire-box" style="cursor:pointer;">
                     <div class="vampire-placeholder"></div>
@@ -1039,10 +1159,10 @@
         ];
 
         const labelInfo = {
-            NORMAL: { title: "당신의 댓글은 Normal 타입입니다 ✨", description: "갈등을 줄이고 맥락을 고려하는 비교적 온화한 말투입니다.", emoji: "😊" },
-            OFFENSIVE: { title: "당신의 댓글은 Offensive(냉소/비꼼) 타입입니다 😐", description: "직설적이며 가벼운 비난과 냉소가 섞인 댓글 성향입니다.", emoji: "😒" },
-            L1_HATE: { title: "당신의 댓글은 L1 Hate(가벼운 혐오) 타입입니다 ⚠️", description: "집단/세대/지역을 농담처럼 묶어 말하는 경향이 감지됩니다.", emoji: "😠" },
-            L2_HATE: { title: "당신의 댓글은 L2 Hate(직접적 혐오) 타입입니다 🚨", description: "배제적이고 공격적인 표현이 포함된 강한 혐오 발화입니다.", emoji: "🤬" }
+            NORMAL: { title: "당신의 댓글은 Normal 타입입니다 ✨", description: "갈등을 줄이고 맥락을 고려하는 비교적 온화한 말투입니다.", emoji: "😊", url: "Normal.html" },
+            OFFENSIVE: { title: "당신의 댓글은 Offensive(냉소/비꼼) 타입입니다 😐", description: "직설적이며 가벼운 비난과 냉소가 섞인 댓글 성향입니다.", emoji: "😒", url: "offensive.html" },
+            L1_HATE: { title: "당신의 댓글은 L1 Hate(가벼운 혐오) 타입입니다 ⚠️", description: "집단/세대/지역을 농담처럼 묶어 말하는 경향이 감지됩니다.", emoji: "😠", url: "L1_hate.html" },
+            L2_HATE: { title: "당신의 댓글은 L2 Hate(직접적 혐오) 타입입니다 🚨", description: "배제적이고 공격적인 표현이 포함된 강한 혐오 발화입니다.", emoji: "🤬", url: "L2_hate.html" }
         };
 
         let currentPhase = "HOME";
@@ -1139,8 +1259,10 @@
             if (!lastLabel) return;
             const info = labelInfo[lastLabel];
 
-            // 이동 로직 유지
-            if (lastLabel === "L2_HATE") { setTimeout(() => window.location.href = 'L2_hate.html', 800); }
+            // 모든 타입에 대해 해당 페이지로 이동
+            if (info.url) {
+                setTimeout(() => window.location.href = info.url, 2000);
+            }
 
             const dbg = window._lastDebug ? `
         <div style="margin-top:12px; font-size:0.85em; color:rgba(255,255,255,0.7); text-align:left;">
@@ -1159,6 +1281,7 @@
               <p class="comment-preview-label">작성한 댓글:</p>
               <p class="comment-preview-text">"${lastComment}"</p>
             </div>
+            <p style="margin-top: 20px; color: rgba(255,255,255,0.8);">잠시 후 해당 페이지로 이동합니다...</p>
             ${dbg}
             <div class="result-buttons">
               <button class="result-button result-button-secondary" onclick="handleBackToArticle()">← 이 기사로 돌아가기</button>
@@ -1245,6 +1368,12 @@
         // Update status UI
         const el = document.getElementById("modelStatus");
         if (el) el.textContent = "✅ 모델 로딩 완료 (v3)";
+
+        // Background video autoplay
+        const bgVideo = document.querySelector('.video-background');
+        if (bgVideo) {
+            bgVideo.play().catch(e => console.log('BG video:', e));
+        }
     </script>
 </body>
 

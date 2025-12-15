@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>L2_Hate</title>
+    <title>L1_Hate</title>
     <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
     <style>
         * {
@@ -310,12 +310,6 @@
             border: 1px solid white;
         }
 
-        .youtube-embed {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
         .video-player {
             width: 100%;
             height: 100%;
@@ -325,31 +319,6 @@
 
         .video-overlay {
             display: none;
-        }
-
-        /* Bottom Video Containers */
-        .bottom-video-1 {
-            grid-column: 2 / 7;
-            grid-row: 7 / 10;
-            background: #000;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-            opacity: 0;
-            animation: appear 0s ease-out 5s forwards;
-            border: 1px solid white;
-        }
-
-        .bottom-video-2 {
-            grid-column: 7 / 12;
-            grid-row: 7 / 10;
-            background: #000;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-            opacity: 0;
-            animation: appear 0s ease-out 5.5s forwards;
-            border: 1px solid white;
         }
 
         /* Clock Widget - 썸네일로 변경 */
@@ -546,9 +515,7 @@
             .clock-widget,
             .photo-item-1,
             .photo-item-2,
-            .photo-item-3,
-            .bottom-video-1,
-            .bottom-video-2 {
+            .photo-item-3 {
                 grid-column: 1;
             }
         }
@@ -558,38 +525,11 @@
     <!-- Animated Background with Video -->
     <div class="animated-background">
         <video class="video-background" autoplay loop muted playsinline preload="auto">
-            <source src="l2-background.mp4" type="video/mp4">
+            <source src="flames-background.mp4" type="video/mp4">
         </video>
         <div class="dithering-overlay"></div>
         <div class="noise-overlay"></div>
         <div class="gradient-layer"></div>
-    </div>
-
-    <!-- L2_Hate Header and Banner -->
-    <div style="max-width: 1400px; margin: 0 auto 20px; padding: 0 40px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid; border-image: linear-gradient(90deg, #ff0000, #ff0066, #8000ff, #0080ff) 1; padding-bottom: 20px; margin-bottom: 20px; background: linear-gradient(135deg, rgba(255, 0, 0, 0.05) 0%, rgba(128, 0, 255, 0.05) 50%, rgba(0, 128, 255, 0.05) 100%);">
-            <div style="display: flex; align-items: center; gap: 20px;">
-                <div style="font-family: 'Courier New', monospace; font-size: 36px; font-weight: bold; background: linear-gradient(135deg, #ff0000, #ff0066, #8000ff, #0080ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-shadow: 0 0 20px rgba(255, 0, 0, 0.5);">
-                    L2_Hate
-                </div>
-            </div>
-        </div>
-        
-        <!-- Banner Grid -->
-        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 20px;">
-            <img src="kartsdesign02_a_cyberpunk_man_wearing_a_futuristic_mask_and_neo_b529565f-90c5-486c-b44d-bc49de39e989.png" alt="HateCET - 가입코드 148" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-            <img src="kartsdesign02_a_masked_man_with_his_face_completely_hidden_game_fb5b0e48-d93f-4c96-911c-2b89a9415145 (1).png" alt="L2BET - 가입코드 222" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-            <img src="kartsdesign02_League_of_legend_Game_art_style_a_woman_wearing_a_51db86e7-5353-47c3-b655-9b0bd8d32eb1.png" alt="L2BET - 가입코드 552 (Panda)" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-            <img src="kartsdesign02_a_cyberpunk_man_wearing_a_futuristic_mask_and_neo_f2d18a47-e903-4c6e-b4a3-0bdd4cdcc29a (1).png" alt="Tabel/L2H - 코드 L2H" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-            <img src="kartsdesign02_League_of_legend_Game_art_style_a_Penguin_with_hi_bfb11e41-a1b2-41be-acb9-98f8f7a73f14.png" alt="L2BET - 가입코드 552 (Futuristic)" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-            <img src="kartsdesign02_League_of_legend_Game_art_style_a_woman_wearing_a_adfcedef-3407-44d5-b318-503a7869eea4.png" alt="L2BET - 가입코드 552" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-            <img src="kartsdesign02_a_cyberpunk_man_wearing_a_futuristic_mask_and_neo_b529565f-90c5-486c-b44d-bc49de39e989.png" alt="HateCET - 가입코드 148" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-            <img src="kartsdesign02_a_masked_man_with_his_face_completely_hidden_game_fb5b0e48-d93f-4c96-911c-2b89a9415145 (1).png" alt="L2BET - 가입코드 222" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-            <img src="kartsdesign02_League_of_legend_Game_art_style_a_woman_wearing_a_51db86e7-5353-47c3-b655-9b0bd8d32eb1.png" alt="L2BET - 가입코드 552 (Panda)" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-            <img src="kartsdesign02_a_cyberpunk_man_wearing_a_futuristic_mask_and_neo_f2d18a47-e903-4c6e-b4a3-0bdd4cdcc29a (1).png" alt="Tabel/L2H - 코드 L2H" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-            <img src="kartsdesign02_League_of_legend_Game_art_style_a_Penguin_with_hi_bfb11e41-a1b2-41be-acb9-98f8f7a73f14.png" alt="L2BET - 가입코드 552 (Futuristic)" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-            <img src="kartsdesign02_League_of_legend_Game_art_style_a_woman_wearing_a_adfcedef-3407-44d5-b318-503a7869eea4.png" alt="L2BET - 가입코드 552" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid white;">
-        </div>
     </div>
 
     <nav>
@@ -618,13 +558,9 @@
 
             <!-- Video Container with Thumbnail -->
             <div class="video-container">
-                <iframe class="youtube-embed" 
-                    src="https://www.youtube.com/embed/2IAMk9rr1_Q" 
-                    title="YouTube video player" 
-                    frameborder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                    allowfullscreen>
-                </iframe>
+                <video id="playVideo" class="video-player" autoplay loop controls preload="auto">
+                    <source src="play-video.mp4" type="video/mp4">
+                </video>
             </div>
 
             <!-- Clock Widget - 썸네일 링크 -->
@@ -645,20 +581,6 @@
                 <a href="https://jisu1745.github.io/jisujisu/new_dat_vis.html" target="_blank" class="khaters-link">
                     <div class="noise-texture"></div>
                 </a>
-            </div>
-
-            <!-- Bottom Video 1 -->
-            <div class="bottom-video-1">
-                <video class="video-player" controls preload="metadata">
-                    <source src="L2_hate_1.mp4" type="video/mp4">
-                </video>
-            </div>
-
-            <!-- Bottom Video 2 -->
-            <div class="bottom-video-2">
-                <video class="video-player" controls preload="metadata">
-                    <source src="L2_hate_2.mp4" type="video/mp4">
-                </video>
             </div>
         </div>
     </div>
